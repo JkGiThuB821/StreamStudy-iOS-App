@@ -16,6 +16,11 @@
 			path = "final-app";
 			sourceTree = "<group>";
 		};
+		E74DC135305BCA6400DF9FDE /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Views;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -34,6 +39,7 @@
 			children = (
 				E74DC125305BC2CE00DF9FDE /* final-app */,
 				E74DC124305BC2CE00DF9FDE /* Products */,
+				E74DC135305BCA6400DF9FDE /* Views */,
 			);
 			sourceTree = "<group>";
 		};
@@ -62,6 +68,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				E74DC125305BC2CE00DF9FDE /* final-app */,
+				E74DC135305BCA6400DF9FDE /* Views */,
 			);
 			name = "final-app";
 			packageProductDependencies = (
