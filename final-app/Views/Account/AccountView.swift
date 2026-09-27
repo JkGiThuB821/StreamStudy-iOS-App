@@ -5,11 +5,10 @@
 //  Created by Joy Jasmine Kaur on 28/9/2026.
 //
 
-
 import SwiftUI
 
 struct AccountView: View {
-    @Binding var isSignedIn: Bool
+    @EnvironmentObject private var authManager: AuthManager
     @State private var tab: Tab = .profile
     @State private var appearance: Appearance = .dark
 
@@ -40,9 +39,9 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Circle().fill(.red).frame(width: 44, height: 44)
-                    .overlay(Text("A").font(.headline))
+                    .overlay(Text(initial).font(.headline))
                 VStack(alignment: .leading) {
-                    Text("Account").font(.headline)
+                    Text(authManager.userEmail ?? "Account").font(.headline)
                     Text("Signed in").font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -74,7 +73,7 @@ struct AccountView: View {
             }
 
             Button("Sign Out", role: .destructive) {
-                isSignedIn = false
+                authManager.signOut()
             }
             .padding(.top, 20)
         }
@@ -90,6 +89,10 @@ struct AccountView: View {
             Toggle("Deadline Reminders", isOn: .constant(true)).tint(.red)
         }
         .padding(.horizontal)
+    }
+
+    private var initial: String {
+        String((authManager.userEmail ?? "A").prefix(1)).uppercased()
     }
 
     private func row(icon: String, label: String) -> some View {

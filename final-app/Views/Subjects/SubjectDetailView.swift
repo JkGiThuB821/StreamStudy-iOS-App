@@ -11,6 +11,7 @@ import SwiftData
 struct SubjectDetailView: View {
     @Bindable var subject: Subject
     @State private var showingAddDeadline = false
+    @State private var showingAddTopic = false
 
     var body: some View {
         List {
@@ -59,12 +60,28 @@ struct SubjectDetailView: View {
                         }
                     }
                 }
+
+                if subject.topics.isEmpty {
+                    Text("No topics yet — tap + to add one.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .navigationTitle(subject.name)
-        .navigationDestination(for: Topic.self) { TopicDetailPlaceholderView(topic: $0) }
+        .navigationDestination(for: Topic.self) { TopicDetailView(topic: $0) }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showingAddTopic = true }) {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .sheet(isPresented: $showingAddDeadline) {
             AddDeadlineView(subject: subject)
+        }
+        .sheet(isPresented: $showingAddTopic) {
+            AddTopicView(subject: subject)
         }
     }
 
@@ -74,27 +91,5 @@ struct SubjectDetailView: View {
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-struct TopicDetailPlaceholderView: View {
-    let topic: Topic
-
-    var body: some View {
-        List {
-            ForEach(topic.resources) { resource in
-                Label(resource.title, systemImage: resource.type.sfSymbol)
-            }
-        }
-        .navigationTitle(topic.title)
-        .overlay {
-            if topic.resources.isEmpty {
-                ContentUnavailableView(
-                    "No resources yet",
-                    systemImage: "play.rectangle",
-                    description: Text("Resource discovery is added in Stage 3.")
-                )
-            }
-        }
     }
 }

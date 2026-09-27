@@ -54,6 +54,6 @@ final class Topic {
     }
     
     var totalDurationMinutes: Int {
-        resources.reduce(0) { $0 + $1.durationMiuntes}
+        resources.reduce(0) { $0 + $1.durationMinutes}
     }
 }

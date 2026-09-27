@@ -7,9 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseCore
 
 @main
 struct StreamStudyApp: App {
+    @StateObject private var authManager = AuthManager()
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Subject.self,
@@ -27,9 +30,14 @@ struct StreamStudyApp: App {
         }
     }()
     
+    init() {
+        FirebaseApp.configure()
+    }
+    
     var body: some Scene {
         WindowGroup{
             RootView()
+                .environmentObject(authManager)
         }
         .modelContainer(sharedModelContainer)
     }

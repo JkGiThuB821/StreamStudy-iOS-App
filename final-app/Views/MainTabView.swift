@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @Binding var isSignedIn: Bool
 
     var body: some View {
         TabView {
@@ -33,7 +32,7 @@ struct MainTabView: View {
             .tabItem { Label("Progress", systemImage: "chart.bar.fill") }
 
             NavigationStack {
-                AccountView(isSignedIn: $isSignedIn)
+                AccountView()
             }
             .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
         }

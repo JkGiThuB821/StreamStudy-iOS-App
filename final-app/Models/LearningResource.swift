@@ -48,7 +48,7 @@ final class LearningResource {
     var thumbnailURLString: String?
     var sourceName: String
     var type: ResourceType
-    var durationMiuntes: Int
+    var durationMinutes: Int
     var isCompleted: Bool
     var isSaved: Bool
     var addedAt: Date
@@ -71,13 +71,13 @@ final class LearningResource {
         self.thumbnailURLString = thumbnailURLString
         self.sourceName = sourceName
         self.type = type
-        self.durationMiuntes = durationMinutes
+        self.durationMinutes = durationMinutes
         self.isCompleted = false
         self.isSaved = false
         self.addedAt = .now
     }
     
     var lengthCategory: ResourceLength {
-        ResourceLength.classify(minutes: durationMiuntes)
+        ResourceLength.classify(minutes: durationMinutes)
     }
 }

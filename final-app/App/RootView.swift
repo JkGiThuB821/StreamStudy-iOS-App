@@ -13,9 +13,9 @@ struct RootView: View {
     var body: some View {
         Group {
             if isSignedIn {
-                MainTabView(isSignedIn: $isSignedIn)
+                MainTabView()
             } else {
-                SignInView(isSignedIn: $isSignedIn)
+                SignInView()
             }
         }
         .preferredColorScheme(.dark)
