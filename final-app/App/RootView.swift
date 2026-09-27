@@ -4,20 +4,20 @@
 //
 //  Created by Joy Jasmine Kaur on 17/9/2026.
 //
-
 import SwiftUI
 
 struct RootView: View {
-    @State private var isSignedIn = false
-    
+    @EnvironmentObject private var authManager: AuthManager
+
     var body: some View {
         Group {
-            if isSignedIn {
+            if authManager.isSignedIn {
                 MainTabView()
             } else {
                 SignInView()
             }
         }
         .preferredColorScheme(.dark)
+        .animation(.default, value: authManager.isSignedIn)
     }
 }
