@@ -9,8 +9,34 @@ import SwiftUI
 
 struct MainTabView: View {
     @Binding var isSignedIn: Bool
-    
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        TabView {
+            NavigationStack {
+                HomeView()
+            }
+            .tabItem { Label("Home", systemImage: "house.fill") }
+
+            NavigationStack {
+                SubjectsLibraryView()
+            }
+            .tabItem { Label("Subjects", systemImage: "square.grid.2x2.fill") }
+
+            NavigationStack {
+                CalendarView()
+            }
+            .tabItem { Label("Calendar", systemImage: "calendar") }
+
+            NavigationStack {
+                ProgressDashboardView()
+            }
+            .tabItem { Label("Progress", systemImage: "chart.bar.fill") }
+
+            NavigationStack {
+                AccountView(isSignedIn: $isSignedIn)
+            }
+            .tabItem { Label("Profile", systemImage: "person.crop.circle.fill") }
+        }
+        .tint(.red)
     }
 }

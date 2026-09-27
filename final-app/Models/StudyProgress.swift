@@ -16,7 +16,7 @@ final class StudyProgress {
     
     var topic: Topic?
     
-    init(dat: Date = .now, minutesSpent: Int) {
+    init(date: Date = .now, minutesSpent: Int) {
         self.id = UUID()
         self.date = date
         self.minutesSpent = minutesSpent

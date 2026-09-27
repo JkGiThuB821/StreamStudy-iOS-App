@@ -9,8 +9,8 @@ import Foundation
 import SwiftData
 
 enum ResourceType: String, Codable, CaseIterable {
-    case video,
-    case article,
+    case video
+    case article
     case documentation
     
     var displayName: String {

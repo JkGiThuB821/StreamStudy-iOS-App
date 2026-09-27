@@ -22,7 +22,7 @@ struct SignInView: View {
             Color.black.ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: 24) {
-                Text("STUDYFLIX")
+                Text("StreamStudy")
                     .font(.title2.bold())
                     .foregroundStyle(.red)
                 

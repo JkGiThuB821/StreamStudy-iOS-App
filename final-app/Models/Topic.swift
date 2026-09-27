@@ -39,11 +39,11 @@ final class Topic {
         orderIndex: Int = 0
     ) {
         self.id = UUID()
-        self.title = title,
-        self.topicDescription = topicDescription,
-        self.isCompleted = false,
-        self.difficulty = .notRated,
-        self.orderIndex = orderIndex,
+        self.title = title
+        self.topicDescription = topicDescription
+        self.isCompleted = false
+        self.difficulty = .notRated
+        self.orderIndex = orderIndex
         self.createdAt = .now
     }
     

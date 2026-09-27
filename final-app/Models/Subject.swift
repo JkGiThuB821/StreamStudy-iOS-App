@@ -17,7 +17,7 @@ final class Subject {
     var iconName: String
     var createdAt: Date
     
-    @Relationship(deleteRule: .cascade, inverse: \Topic.subbject)
+    @Relationship(deleteRule: .cascade, inverse: \Topic.subject)
     var topics: [Topic] = []
     
     @Relationship(deleteRule: .cascade, inverse: \Deadline.subject)
@@ -30,7 +30,7 @@ final class Subject {
         iconName: String = "book.closed.fill"
     ) {
         self.id = UUID()
-        self.name = name,
+        self.name = name
         self.subjectDescription = subjectDescription
         self.colorHex = colorHex
         self.iconName = iconName
@@ -39,7 +39,7 @@ final class Subject {
     
     var progress: Double {
         guard !topics.isEmpty else { return 0 }
-        let completed = topic.filter { $0.isCompleted }.count
-        return Double(completed) / Double(topic.count)
+        let completed = topics.filter { $0.isCompleted }.count
+        return Double(completed) / Double(topics.count)
     }
 }
