@@ -16,6 +16,7 @@ struct AddTopicView: View {
 
     @State private var title = ""
     @State private var description = ""
+    @State private var searchTag = ""
 
     var body: some View {
         NavigationStack {
@@ -24,6 +25,15 @@ struct AddTopicView: View {
                     TextField("Topic title (e.g. Big O Notation)", text: $title)
                     TextField("Short description", text: $description, axis: .vertical)
                         .lineLimit(2...4)
+                }
+
+                Section {
+                    TextField("e.g. swift, swiftui, ios, algorithms", text: $searchTag)
+                        .textInputAutocapitalization(.never)
+                } header: {
+                    Text("Search tag (optional)")
+                } footer: {
+                    Text("Used to find dev.to articles and curated docs for this topic. Leave blank to guess one from the title.")
                 }
             }
             .navigationTitle("Add Topic")
@@ -43,11 +53,11 @@ struct AddTopicView: View {
         let topic = Topic(
             title: title,
             topicDescription: description,
-            orderIndex: subject.topics.count
+            orderIndex: subject.topics.count,
+            searchTag: searchTag
         )
         topic.subject = subject
         modelContext.insert(topic)
         dismiss()
     }
 }
-
