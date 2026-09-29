@@ -9,11 +9,13 @@
 /* Begin PBXBuildFile section */
 		E76F30A830696C8B00AD3F58 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */; };
 		E76F30AC3069705E00AD3F58 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E76F30AB3069705E00AD3F58 /* FirebaseAuth */; };
+		E7D39573306BA60F000136F2 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E7D39571306BA5FF000136F2 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E74DC123305BC2CE00DF9FDE /* final-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "final-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		E7D39571306BA5FF000136F2 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -39,6 +41,7 @@
 		E74DC11A305BC2CE00DF9FDE = {
 			isa = PBXGroup;
 			children = (
+				E7D39571306BA5FF000136F2 /* .gitignore */,
 				E74DC125305BC2CE00DF9FDE /* final-app */,
 				E74DC124305BC2CE00DF9FDE /* Products */,
 				E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */,
@@ -129,6 +132,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E7D39573306BA60F000136F2 /* .gitignore in Resources */,
 				E76F30A830696C8B00AD3F58 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
