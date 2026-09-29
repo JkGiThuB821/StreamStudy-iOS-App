@@ -14,7 +14,6 @@ enum DifficultyRating: String, Codable, CaseIterable {
     case notRated
 }
 
-
 @Model
 final class Topic {
     var id: UUID
@@ -24,19 +23,22 @@ final class Topic {
     var difficulty: DifficultyRating
     var orderIndex: Int
     var createdAt: Date
-    
+    var searchTag: String
+    var hasSearchedForResources: Bool
+
     var subject: Subject?
-    
+
     @Relationship(deleteRule: .cascade, inverse: \LearningResource.topic)
     var resources: [LearningResource] = []
-    
+
     @Relationship(deleteRule: .cascade, inverse: \StudyProgress.topic)
     var progressEntries: [StudyProgress] = []
-    
+
     init(
         title: String,
         topicDescription: String = "",
-        orderIndex: Int = 0
+        orderIndex: Int = 0,
+        searchTag: String = ""
     ) {
         self.id = UUID()
         self.title = title
@@ -45,15 +47,17 @@ final class Topic {
         self.difficulty = .notRated
         self.orderIndex = orderIndex
         self.createdAt = .now
+        self.searchTag = searchTag
+        self.hasSearchedForResources = false
     }
-    
+
     var progress: Double {
         guard !resources.isEmpty else { return 0 }
         let completed = resources.filter { $0.isCompleted }.count
         return Double(completed) / Double(resources.count)
     }
-    
+
     var totalDurationMinutes: Int {
-        resources.reduce(0) { $0 + $1.durationMinutes}
+        resources.reduce(0) { $0 + $1.durationMinutes }
     }
 }
