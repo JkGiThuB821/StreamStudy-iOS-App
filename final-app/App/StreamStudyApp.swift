@@ -32,7 +32,37 @@ struct StreamStudyApp: App {
     
     init() {
         FirebaseApp.configure()
-    }
+        
+        let appearance = UINavigationBarAppearance()
+
+               appearance.configureWithTransparentBackground()
+
+               appearance.titleTextAttributes = [
+                   .font: UIFont(
+                       name: "SpaceGrotesk-SemiBold",
+                       size: 20
+                   ) ?? UIFont.systemFont(
+                       ofSize: 20,
+                       weight: .semibold
+                   ),
+                   .foregroundColor: UIColor.white
+               ]
+
+               appearance.largeTitleTextAttributes = [
+                   .font: UIFont(
+                       name: "SpaceGrotesk-Bold",
+                       size: 34
+                   ) ?? UIFont.systemFont(
+                       ofSize: 34,
+                       weight: .bold
+                   ),
+                   .foregroundColor: UIColor.white
+               ]
+
+               UINavigationBar.appearance().standardAppearance = appearance
+               UINavigationBar.appearance().scrollEdgeAppearance = appearance
+               UINavigationBar.appearance().compactAppearance = appearance
+           }
     
     var body: some Scene {
         WindowGroup{
@@ -42,3 +72,4 @@ struct StreamStudyApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
+
