@@ -19,14 +19,14 @@ struct SubjectDetailView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: subject.iconName)
-                            .font(.title)
+                            .font(.sgTitle)
                             .padding()
                             .background(Color(hex: subject.colorHex))
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                         VStack(alignment: .leading) {
-                            Text(subject.name).font(.title2.bold())
+                            Text(subject.name).font(.spaceGrotesk(size: 22, weight: .bold))
                             Text(subject.subjectDescription)
-                                .font(.subheadline)
+                                .font(.sgSubheadline)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -53,9 +53,9 @@ struct SubjectDetailView: View {
                 ForEach(subject.topics.sorted { $0.orderIndex < $1.orderIndex }) { topic in
                     NavigationLink(value: topic) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(topic.title).font(.subheadline.bold())
+                            Text(topic.title).font(.spaceGrotesk(size: 15, weight: .bold))
                             Text("\(topic.resources.count) episodes")
-                                .font(.caption)
+                                .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -63,7 +63,7 @@ struct SubjectDetailView: View {
 
                 if subject.topics.isEmpty {
                     Text("No topics yet — tap + to add one.")
-                        .font(.caption)
+                        .font(.sgCaption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -87,8 +87,8 @@ struct SubjectDetailView: View {
 
     private func statBlock(value: String, label: String) -> some View {
         VStack {
-            Text(value).font(.headline)
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(value).font(.sgHeadline)
+            Text(label).font(.sgCaption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }

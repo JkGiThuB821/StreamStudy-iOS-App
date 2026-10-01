@@ -41,8 +41,8 @@ struct SubjectsLibraryView: View {
                 Button(action: { showingAddSubject = true }) {
                     VStack {
                         Image(systemName: "plus")
-                            .font(.title)
-                        Text("Add Subject").font(.caption)
+                            .font(.sgTitle)
+                        Text("Add Subject").font(.sgCaption)
                     }
                     .frame(maxWidth: .infinity, minHeight: 110)
                     .background(.white.opacity(0.06))
@@ -70,8 +70,8 @@ struct SubjectsLibraryView: View {
 
     private func statBlock(value: String, label: String) -> some View {
         VStack {
-            Text(value).font(.title3.bold())
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(value).font(.spaceGrotesk(size: 20, weight: .bold))
+            Text(label).font(.sgCaption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -82,14 +82,14 @@ struct SubjectsLibraryView: View {
                 Image(systemName: subject.iconName)
                 Spacer()
                 Text("\(Int(subject.progress * 100))%")
-                    .font(.caption2.bold())
+                    .font(.spaceGrotesk(size: 11, weight: .bold))
             }
             Spacer()
             Text(subject.name)
-                .font(.subheadline.bold())
+                .font(.spaceGrotesk(size: 15, weight: .bold))
                 .lineLimit(2)
             Text(subject.subjectDescription)
-                .font(.caption2)
+                .font(.sgCaption2)
                 .foregroundStyle(.white.opacity(0.7))
                 .lineLimit(1)
         }

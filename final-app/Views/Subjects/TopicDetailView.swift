@@ -57,7 +57,7 @@ struct TopicDetailView: View {
                             tagDraft = topic.searchTag
                             isEditingTag = true
                         }
-                        .font(.caption)
+                        .font(.sgCaption)
                     }
                 }
             } footer: {
@@ -82,17 +82,17 @@ struct TopicDetailView: View {
 
                 if topic.hasSearchedForResources {
                     Text("Already searched once: this will call the YouTube API again (costs quota). Use it after changing the search tag above.")
-                        .font(.caption2)
+                        .font(.sgCaption2)
                         .foregroundStyle(.orange)
                 } else {
                     Text("Searches once for “\(ResourceDiscoveryService.tag(for: topic))” and caches results — this won't re-query automatically.")
-                        .font(.caption2)
+                        .font(.sgCaption2)
                         .foregroundStyle(.secondary)
                 }
 
                 if let discoveryError {
                     Text(discoveryError)
-                        .font(.caption)
+                        .font(.sgCaption)
                         .foregroundStyle(.orange)
                 }
             }
@@ -106,7 +106,7 @@ struct TopicDetailView: View {
                     Text(topic.hasSearchedForResources
                          ? "No resources found: try a different search tag, or add one manually."
                          : "No resources yet: tap Find Resources or + to add one.")
-                        .font(.caption)
+                        .font(.sgCaption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -141,9 +141,9 @@ struct TopicDetailView: View {
             Image(systemName: resource.type.sfSymbol)
                 .foregroundStyle(.red)
             VStack(alignment: .leading, spacing: 2) {
-                Text(resource.title).font(.subheadline.bold())
+                Text(resource.title).font(.spaceGrotesk(size: 15, weight: .bold))
                 Text("\(resource.sourceName) · \(resource.durationMinutes) min")
-                    .font(.caption)
+                    .font(.sgCaption)
                     .foregroundStyle(.secondary)
             }
             Spacer()

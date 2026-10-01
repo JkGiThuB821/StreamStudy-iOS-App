@@ -32,15 +32,15 @@ struct SignInView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     Text("StreamStudy")
-                        .font(.title2.bold())
+                        .font(.spaceGrotesk(size: 22, weight: .bold))
                         .foregroundStyle(.red)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("YOUR LEARNING. YOUR SCHEDULE.")
-                            .font(.caption)
+                            .font(.sgCaption)
                             .foregroundStyle(.secondary)
                         Text(mode == .signIn ? "Welcome back" : "Start learning today")
-                            .font(.title.bold())
+                            .font(.spaceGrotesk(size: 28, weight: .bold))
                             .foregroundStyle(.white)
                     }
 
@@ -66,7 +66,7 @@ struct SignInView: View {
 
                     if let errorMessage = authManager.errorMessage {
                         Text(errorMessage)
-                            .font(.caption)
+                            .font(.sgCaption)
                             .foregroundStyle(.red)
                     }
 
@@ -86,7 +86,7 @@ struct SignInView: View {
                     }
                     .disabled(!isFormValid || authManager.isLoading)
 
-                    HStack { Divider(); Text("OR").foregroundStyle(.secondary).font(.caption); Divider() }
+                    HStack { Divider(); Text("OR").foregroundStyle(.secondary).font(.sgCaption); Divider() }
 
                     Button(action: { socialSignInNote = "Sign in with Apple isn't wired up yet." }) {
                         Label("Continue with Apple", systemImage: "apple.logo")
@@ -108,12 +108,12 @@ struct SignInView: View {
 
                     if let socialSignInNote {
                         Text(socialSignInNote)
-                            .font(.caption2)
+                            .font(.sgCaption2)
                             .foregroundStyle(.secondary)
                     }
 
                     Text("By continuing, you agree to our Terms of Use and Privacy Policy")
-                        .font(.caption2)
+                        .font(.sgCaption2)
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
                 }

@@ -37,7 +37,7 @@ struct ProgressDashboardView: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("By Subject").font(.headline)
+                    Text("By Subject").font(.sgHeadline)
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                         ForEach(subjects) { subject in
                             VStack {
@@ -47,10 +47,10 @@ struct ProgressDashboardView: View {
                                         .trim(from: 0, to: subject.progress)
                                         .stroke(Color(hex: subject.colorHex), style: StrokeStyle(lineWidth: 5, lineCap: .round))
                                         .rotationEffect(.degrees(-90))
-                                    Text("\(Int(subject.progress * 100))%").font(.caption2.bold())
+                                    Text("\(Int(subject.progress * 100))%").font(.spaceGrotesk(size: 11, weight: .bold))
                                 }
                                 .frame(width: 56, height: 56)
-                                Text(subject.name).font(.caption2).lineLimit(1)
+                                Text(subject.name).font(.sgCaption2).lineLimit(1)
                             }
                         }
                     }
@@ -58,13 +58,13 @@ struct ProgressDashboardView: View {
                 .padding(.horizontal)
                 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Study Activity").font(.headline)
+                    Text("Study Activity").font(.sgHeadline)
                     RoundedRectangle(cornerRadius: 10)
                         .fill(.white.opacity(0.06))
                         .frame(height: 140)
                         .overlay(
                             Text("Swift Charts activity graph — Stage 6")
-                                .font(.caption)
+                                .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         )
                 }
@@ -79,8 +79,8 @@ struct ProgressDashboardView: View {
     
     private func statBlock(value: String, label: String) -> some View {
         VStack {
-            Text(value).font(.title3.bold())
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(value).font(.spaceGrotesk(size: 20, weight: .bold))
+            Text(label).font(.sgCaption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }

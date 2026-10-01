@@ -17,6 +17,7 @@ struct RootView: View {
                 SignInView()
             }
         }
+        .font(.sgBody)
         .preferredColorScheme(.dark)
         .animation(.default, value: authManager.isSignedIn)
     }

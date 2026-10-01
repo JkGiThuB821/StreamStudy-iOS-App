@@ -29,6 +29,7 @@ struct AddDeadlineView: View {
                             Text("None").tag(Subject?.none)
                             ForEach(subjects) { Text($0.name).tag(Optional($0)) }
                         }
+                        .font(.sgBody)
                     }
                     DatePicker("Due date", selection: $dueDate, displayedComponents: .date)
                     Picker("Priority", selection: $priority) {
@@ -36,6 +37,7 @@ struct AddDeadlineView: View {
                     }
                 }
             }
+            .font(.sgBody)
             .navigationTitle("Add Deadline")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

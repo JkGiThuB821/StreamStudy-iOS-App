@@ -39,10 +39,10 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Circle().fill(.red).frame(width: 44, height: 44)
-                    .overlay(Text(initial).font(.headline))
+                    .overlay(Text(initial).font(.sgHeadline))
                 VStack(alignment: .leading) {
-                    Text(authManager.userEmail ?? "Account").font(.headline)
-                    Text("Signed in").font(.caption).foregroundStyle(.secondary)
+                    Text(authManager.userEmail ?? "Account").font(.sgHeadline)
+                    Text("Signed in").font(.sgCaption).foregroundStyle(.secondary)
                 }
             }
 
@@ -55,7 +55,7 @@ struct AccountView: View {
                     ForEach(Appearance.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
             } header: {
-                Text("APPEARANCE").font(.caption).foregroundStyle(.secondary)
+                Text("APPEARANCE").font(.sgCaption).foregroundStyle(.secondary)
             }
 
             VStack(alignment: .leading, spacing: 12) {
@@ -69,7 +69,7 @@ struct AccountView: View {
                 Text("iCloud / Firestore Sync")
                 Spacer()
                 Button("Sync Now") {}
-                    .font(.caption.bold())
+                    .font(.spaceGrotesk(size: 12, weight: .bold))
             }
 
             Button("Sign Out", role: .destructive) {
@@ -82,9 +82,9 @@ struct AccountView: View {
 
     private var notificationsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Recent Alerts").font(.headline)
+            Text("Recent Alerts").font(.sgHeadline)
 
-            Text("Notification Preferences").font(.caption).foregroundStyle(.secondary).padding(.top, 8)
+            Text("Notification Preferences").font(.sgCaption).foregroundStyle(.secondary).padding(.top, 8)
             Toggle("Push Notifications", isOn: .constant(true)).tint(.red)
             Toggle("Deadline Reminders", isOn: .constant(true)).tint(.red)
         }
@@ -100,7 +100,7 @@ struct AccountView: View {
             Image(systemName: icon).frame(width: 24)
             Text(label)
             Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            Image(systemName: "chevron.right").font(.sgCaption).foregroundStyle(.secondary)
         }
     }
 }

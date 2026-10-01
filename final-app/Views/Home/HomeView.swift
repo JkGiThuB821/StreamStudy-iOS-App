@@ -84,23 +84,23 @@ struct HomeView: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("YOUR NEXT WATCH")
-                .font(.caption.bold())
+                .font(.spaceGrotesk(size: 16, weight: .bold))
                 .foregroundStyle(.red)
                 .padding(.horizontal)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(topic.subject?.name ?? "")
-                    .font(.caption)
+                    .font(.spaceGrotesk(size: 16, weight: .medium))
                     .foregroundStyle(.secondary)
                 Text(resource?.title ?? topic.title)
-                    .font(.title3.bold())
+                    .font(.spaceGrotesk(size: 20, weight: .bold))
                 if let resource {
                     Text("\(topic.title) · \(resource.durationMinutes) min")
-                        .font(.subheadline)
+                        .font(.sgSubheadline)
                         .foregroundStyle(.secondary)
                 } else {
                     Text(topic.title)
-                        .font(.subheadline)
+                        .font(.sgSubheadline)
                         .foregroundStyle(.secondary)
                 }
 
@@ -126,7 +126,7 @@ struct HomeView: View {
                             .clipShape(Capsule())
                     }
                 }
-                .font(.subheadline.bold())
+                .font(.spaceGrotesk(size: 15, weight: .bold))
                 .padding(.top, 4)
             }
             .padding()
@@ -143,10 +143,10 @@ struct HomeView: View {
     private func sectionRow(title: String, badge: String?, recommendations: [TopicRecommendation]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(title).font(.headline)
+                Text(title).font(.sgHeadline)
                 if let badge {
                     Text(badge)
-                        .font(.caption2.bold())
+                        .font(.spaceGrotesk(size: 11, weight: .bold))
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(.red)
                         .clipShape(Capsule())
@@ -168,19 +168,19 @@ struct HomeView: View {
 
     private var dueSoonRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Due Soon").font(.headline).foregroundStyle(.white).padding(.horizontal)
+            Text("Due Soon").font(.sgHeadline).foregroundStyle(.white).padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(upcomingDeadlines.prefix(5)) { deadline in
                         VStack(alignment: .leading, spacing: 4) {
                             Text("DEADLINE")
-                                .font(.caption2.bold())
+                                .font(.spaceGrotesk(size: 11, weight: .bold))
                                 .foregroundStyle(.red)
                             Text(deadline.subject?.name ?? deadline.title)
-                                .font(.subheadline.bold())
+                                .font(.sgSubheadline)
                                 .lineLimit(1)
                             Text("\(deadline.daysRemaining) days")
-                                .font(.caption)
+                                .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
                         .padding()
@@ -197,17 +197,17 @@ struct HomeView: View {
 
     private var quickWinsRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Quick Wins").font(.headline).foregroundStyle(.white).padding(.horizontal)
+            Text("Quick Wins").font(.sgHeadline).foregroundStyle(.white).padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(quickWins.prefix(8)) { resource in
                         VStack(alignment: .leading, spacing: 4) {
                             Image(systemName: resource.type.sfSymbol).foregroundStyle(.red)
                             Text(resource.title)
-                                .font(.subheadline.bold())
+                                .font(.sgSubheadline)
                                 .lineLimit(2)
                             Text("\(resource.durationMinutes) min")
-                                .font(.caption)
+                                .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
                         .padding()
@@ -227,10 +227,10 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Spacer()
                 Text(topic.subject?.name ?? "")
-                    .font(.caption2)
+                    .font(.sgCaption2)
                     .foregroundStyle(.secondary)
                 Text(topic.title)
-                    .font(.subheadline.bold())
+                    .font(.sgSubheadline)
                     .lineLimit(2)
                 ProgressView(value: topic.progress)
                     .tint(.red)

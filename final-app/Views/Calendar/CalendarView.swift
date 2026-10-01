@@ -27,10 +27,10 @@ struct CalendarView: View {
             legendRow
 
             HStack {
-                Text("Upcoming Deadlines").font(.headline)
+                Text("Upcoming Deadlines").font(.sgHeadline)
                 Spacer()
                 Button(action: { showingAddDeadline = true }) {
-                    Label("Add", systemImage: "plus").font(.caption.bold())
+                    Label("Add", systemImage: "plus").font(.spaceGrotesk(size: 12, weight: .bold))
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
@@ -42,14 +42,14 @@ struct CalendarView: View {
                 ForEach(upcoming) { deadline in
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(deadline.title).font(.subheadline.bold())
+                            Text(deadline.title).font(.spaceGrotesk(size: 15, weight: .bold))
                             Text(deadline.subject?.name ?? "General")
-                                .font(.caption)
+                                .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
                         Text("\(deadline.daysRemaining)d")
-                            .font(.caption.bold())
+                            .font(.sgCaption)
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(priorityColor(deadline.priority).opacity(0.25))
                             .foregroundStyle(priorityColor(deadline.priority))
@@ -70,7 +70,7 @@ struct CalendarView: View {
 
                 if upcoming.isEmpty {
                     Text("No upcoming deadlines.")
-                        .font(.caption)
+                        .font(.sgCaption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal)
                 }
@@ -88,7 +88,7 @@ struct CalendarView: View {
             Button(action: { changeMonth(by: -1) }) { Image(systemName: "chevron.left") }
             Spacer()
             Text(displayedMonth.formatted(.dateTime.month(.wide).year()))
-                .font(.headline)
+                .font(.sgHeadline)
             Spacer()
             Button(action: { changeMonth(by: 1) }) { Image(systemName: "chevron.right") }
         }
@@ -101,7 +101,7 @@ struct CalendarView: View {
 
         return LazyVGrid(columns: columns, spacing: 10) {
             ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) {
-                Text($0).font(.caption2).foregroundStyle(.secondary)
+                Text($0).font(.sgCaption2).foregroundStyle(.secondary)
             }
             ForEach(days, id: \.self) { date in
                 if let date {
@@ -110,7 +110,7 @@ struct CalendarView: View {
                     }
                     VStack(spacing: 2) {
                         Text("\(Calendar.current.component(.day, from: date))")
-                            .font(.caption)
+                            .font(.sgCaption)
                         if let first = dayDeadlines.first {
                             Circle().fill(priorityColor(first.priority)).frame(width: 5, height: 5)
                         }
@@ -130,7 +130,7 @@ struct CalendarView: View {
             legendDot(.yellow, "Medium Priority")
             legendDot(.red, "High Priority")
         }
-        .font(.caption2)
+        .font(.sgCaption2)
         .padding(.top, 10)
     }
 

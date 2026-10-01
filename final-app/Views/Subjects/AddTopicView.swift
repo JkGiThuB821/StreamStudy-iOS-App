@@ -36,6 +36,7 @@ struct AddTopicView: View {
                     Text("Used to find dev.to articles and curated docs for this topic. Leave blank to guess one from the title.")
                 }
             }
+            .font(.sgBody)
             .navigationTitle("Add Topic")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

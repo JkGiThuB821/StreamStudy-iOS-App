@@ -64,6 +64,7 @@ struct AddSubjectView: View {
                 }
                 .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
             }
+            .font(.sgBody)
             .navigationTitle("New Subject")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

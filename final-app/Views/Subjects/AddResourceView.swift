@@ -44,6 +44,7 @@ struct AddResourceView: View {
                     Stepper("Duration: \(durationMinutes) min", value: $durationMinutes, in: 1...240)
                 }
             }
+            .font(.sgBody)
             .navigationTitle("Add Resource")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
