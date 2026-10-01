@@ -9,13 +9,29 @@ import SwiftUI
 import SwiftData
 
 struct HomeView: View {
+    @Environment(\.openURL) private var openURL
     @Query(sort: \Deadline.dueDate) private var deadlines: [Deadline]
     @Query private var subjects: [Subject]
 
-    private var inProgressTopics: [Topic] {
-        subjects
-            .flatMap(\.topics)
-            .filter { !$0.isCompleted && $0.progress > 0 }
+    private var allTopics: [Topic] { subjects.flatMap(\.topics) }
+
+    private var ranked: [TopicRecommendation] {
+        RecommendationEngine.rank(topics: allTopics)
+    }
+
+    private var continueLearning: [TopicRecommendation] {
+        ranked.filter { $0.topic.progress > 0 }
+    }
+
+    private var recommendedForYou: [TopicRecommendation] {
+        ranked.filter { $0.topic.progress == 0 }
+    }
+
+    private var quickWins: [LearningResource] {
+        allTopics
+            .flatMap(\.resources)
+            .filter { !$0.isCompleted && $0.lengthCategory == .short }
+            .sorted { $0.durationMinutes < $1.durationMinutes }
     }
 
     private var upcomingDeadlines: [Deadline] {
@@ -25,17 +41,27 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                if let nextDeadline = upcomingDeadlines.first {
-                    nextWatchCard(for: nextDeadline)
+                if let topPick = ranked.first {
+                    nextWatchCard(for: topPick)
                 }
 
-                sectionRow(title: "Continue Learning", badge: "IN PROGRESS", topics: inProgressTopics)
+                if !continueLearning.isEmpty {
+                    sectionRow(title: "Continue Learning", badge: "IN PROGRESS", recommendations: continueLearning)
+                }
 
                 if !upcomingDeadlines.isEmpty {
                     dueSoonRow
                 }
 
-                if inProgressTopics.isEmpty && upcomingDeadlines.isEmpty {
+                if !quickWins.isEmpty {
+                    quickWinsRow
+                }
+
+                if !recommendedForYou.isEmpty {
+                    sectionRow(title: "Recommended For You", badge: nil, recommendations: recommendedForYou)
+                }
+
+                if ranked.isEmpty && upcomingDeadlines.isEmpty {
                     ContentUnavailableView(
                         "Nothing yet",
                         systemImage: "sparkles.tv",
@@ -49,33 +75,56 @@ struct HomeView: View {
         .background(Color.black)
         .navigationTitle("Home")
         .toolbarBackground(.black, for: .navigationBar)
+        .navigationDestination(for: Topic.self) { TopicDetailView(topic: $0) }
     }
 
-    private func nextWatchCard(for deadline: Deadline) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private func nextWatchCard(for recommendation: TopicRecommendation) -> some View {
+        let topic = recommendation.topic
+        let resource = recommendation.nextResource
+
+        return VStack(alignment: .leading, spacing: 8) {
             Text("YOUR NEXT WATCH")
                 .font(.caption.bold())
                 .foregroundStyle(.red)
                 .padding(.horizontal)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(deadline.subject?.name ?? deadline.title)
-                    .font(.title3.bold())
-                Text(deadline.title)
-                    .font(.subheadline)
+                Text(topic.subject?.name ?? "")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                Text(resource?.title ?? topic.title)
+                    .font(.title3.bold())
+                if let resource {
+                    Text("\(topic.title) · \(resource.durationMinutes) min")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(topic.title)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
                 HStack {
-                    Label("Continue", systemImage: "play.fill")
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(.white)
-                        .foregroundStyle(.black)
-                        .clipShape(Capsule())
-                    Label("More Info", systemImage: "info.circle")
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(.white.opacity(0.15))
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
+                    Button {
+                        if let urlString = resource?.urlString, let url = URL(string: urlString) {
+                            openURL(url)
+                        }
+                    } label: {
+                        Label("Continue", systemImage: "play.fill")
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(.white)
+                            .foregroundStyle(.black)
+                            .clipShape(Capsule())
+                    }
+                    .disabled(resource == nil)
+
+                    NavigationLink(value: topic) {
+                        Label("More Info", systemImage: "info.circle")
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(.white.opacity(0.15))
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                    }
                 }
                 .font(.subheadline.bold())
                 .padding(.top, 4)
@@ -91,7 +140,7 @@ struct HomeView: View {
         }
     }
 
-    private func sectionRow(title: String, badge: String?, topics: [Topic]) -> some View {
+    private func sectionRow(title: String, badge: String?, recommendations: [TopicRecommendation]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(title).font(.headline)
@@ -108,8 +157,8 @@ struct HomeView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(topics) { topic in
-                        topicCard(topic)
+                    ForEach(recommendations) { recommendation in
+                        topicCard(recommendation.topic)
                     }
                 }
                 .padding(.horizontal)
@@ -146,22 +195,52 @@ struct HomeView: View {
         }
     }
 
-    private func topicCard(_ topic: Topic) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Spacer()
-            Text(topic.subject?.name ?? "")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(topic.title)
-                .font(.subheadline.bold())
-                .lineLimit(2)
-            ProgressView(value: topic.progress)
-                .tint(.red)
+    private var quickWinsRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Quick Wins").font(.headline).foregroundStyle(.white).padding(.horizontal)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(quickWins.prefix(8)) { resource in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Image(systemName: resource.type.sfSymbol).foregroundStyle(.red)
+                            Text(resource.title)
+                                .font(.subheadline.bold())
+                                .lineLimit(2)
+                            Text("\(resource.durationMinutes) min")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .frame(width: 130, height: 100, alignment: .leading)
+                        .background(.white.opacity(0.08))
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+                .padding(.horizontal)
+            }
         }
-        .padding(10)
-        .frame(width: 150, height: 110, alignment: .leading)
-        .background(Color(hex: topic.subject?.colorHex ?? "#333333").opacity(0.5))
-        .foregroundStyle(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func topicCard(_ topic: Topic) -> some View {
+        NavigationLink(value: topic) {
+            VStack(alignment: .leading, spacing: 4) {
+                Spacer()
+                Text(topic.subject?.name ?? "")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(topic.title)
+                    .font(.subheadline.bold())
+                    .lineLimit(2)
+                ProgressView(value: topic.progress)
+                    .tint(.red)
+            }
+            .padding(10)
+            .frame(width: 150, height: 110, alignment: .leading)
+            .background(Color(hex: topic.subject?.colorHex ?? "#333333").opacity(0.5))
+            .foregroundStyle(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
     }
 }

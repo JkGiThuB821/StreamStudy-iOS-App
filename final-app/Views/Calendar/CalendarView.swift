@@ -9,22 +9,23 @@ import SwiftUI
 import SwiftData
 
 struct CalendarView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \Deadline.dueDate) private var deadlines: [Deadline]
     @State private var displayedMonth = Date.now
     @State private var showingAddDeadline = false
-    
+
     private var upcoming: [Deadline] {
         deadlines.filter { !$0.isOverdue }
     }
-    
+
     var body: some View {
         ScrollView {
             monthHeader
-            
+
             monthGrid
-            
+
             legendRow
-            
+
             HStack {
                 Text("Upcoming Deadlines").font(.headline)
                 Spacer()
@@ -36,7 +37,7 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
             .padding(.top, 8)
-            
+
             LazyVStack(spacing: 8) {
                 ForEach(upcoming) { deadline in
                     HStack {
@@ -58,15 +59,30 @@ struct CalendarView: View {
                     .background(.white.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                     .padding(.horizontal)
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            modelContext.delete(deadline)
+                        } label: {
+                            Label("Delete Deadline", systemImage: "trash")
+                        }
+                    }
+                }
+
+                if upcoming.isEmpty {
+                    Text("No upcoming deadlines.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
                 }
             }
+            .padding(.bottom, 24)
         }
         .background(Color.black)
         .foregroundStyle(.white)
         .navigationTitle("Calendar")
         .sheet(isPresented: $showingAddDeadline) { AddDeadlineView(subject: nil) }
     }
-    
+
     private var monthHeader: some View {
         HStack {
             Button(action: { changeMonth(by: -1) }) { Image(systemName: "chevron.left") }
@@ -78,11 +94,11 @@ struct CalendarView: View {
         }
         .padding()
     }
-    
+
     private var monthGrid: some View {
         let days = daysInMonth()
         let columns = Array(repeating: GridItem(.flexible()), count: 7)
-        
+
         return LazyVGrid(columns: columns, spacing: 10) {
             ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) {
                 Text($0).font(.caption2).foregroundStyle(.secondary)
@@ -107,7 +123,7 @@ struct CalendarView: View {
         }
         .padding(.horizontal)
     }
-    
+
     private var legendRow: some View {
         HStack(spacing: 14) {
             legendDot(.green, "Low Priority")
@@ -117,14 +133,14 @@ struct CalendarView: View {
         .font(.caption2)
         .padding(.top, 10)
     }
-    
+
     private func legendDot(_ color: Color, _ label: String) -> some View {
         HStack(spacing: 4) {
             Circle().fill(color).frame(width: 6, height: 6)
             Text(label)
         }
     }
-    
+
     private func priorityColor(_ priority: DeadlinePriority) -> Color {
         switch priority {
         case .low: return .green
@@ -132,19 +148,19 @@ struct CalendarView: View {
         case .high: return .red
         }
     }
-    
+
     private func changeMonth(by value: Int) {
         if let newMonth = Calendar.current.date(byAdding: .month, value: value, to: displayedMonth) {
             displayedMonth = newMonth
         }
     }
-    
-    private func daysInMonth() -> [Date?] {
+
+        private func daysInMonth() -> [Date?] {
         let calendar = Calendar.current
         guard let range = calendar.range(of: .day, in: .month, for: displayedMonth),
               let firstOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: displayedMonth))
         else { return [] }
-        
+
         let firstWeekday = calendar.component(.weekday, from: firstOfMonth) - 1
         var days: [Date?] = Array(repeating: nil, count: firstWeekday)
         days += range.compactMap { calendar.date(byAdding: .day, value: $0 - 1, to: firstOfMonth) }
