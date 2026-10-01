@@ -1,6 +1,6 @@
 # API keys
-Config/Secrets.xcconfig
-GoogleService.plist
+final-app/Config/Secrets.xcconfig
+GoogleService-Info.plist
 
 # Standard ignores
 .DS_Store
@@ -8,3 +8,5 @@ GoogleService.plist
 DerivedData/
 .build/
 *.xcworkspace/xcuserdata/
+
+final-app/Space_Grotesk
