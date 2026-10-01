@@ -1,5 +1,6 @@
 # API keys
 Config/Secrets.xcconfig
+GoogleService.plist
 
 # Standard ignores
 .DS_Store
