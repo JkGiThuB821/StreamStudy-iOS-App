@@ -18,16 +18,16 @@ struct YouTubeVideoResult: Identifiable {
 enum YouTubeServiceError: LocalizedError {
     case missingAPIKey
     case invalidResponse
-    case httpError(Int)
+    case apiError(reason: String)
 
     var errorDescription: String? {
         switch self {
         case .missingAPIKey:
-            return "No YouTube API key configured (see Config/APIKeys.swift)."
+            return "No YouTube API key configured — see README \"YouTube Data API setup\"."
         case .invalidResponse:
             return "YouTube returned an unexpected response."
-        case .httpError(let code):
-            return "YouTube API request failed (HTTP \(code))."
+        case .apiError(let reason):
+            return reason
         }
     }
 }
@@ -36,16 +36,18 @@ enum YouTubeService {
     private static let baseURL = "https://www.googleapis.com/youtube/v3"
 
     static func searchVideos(query: String, maxResults: Int = 5) async throws -> [YouTubeVideoResult] {
-        guard APIKeys.youTubeDataAPIKey != "YOUR_YOUTUBE_API_KEY_HERE", !APIKeys.youTubeDataAPIKey.isEmpty else {
+        guard let key = APIKeys.youTubeDataAPIKey, !key.isEmpty else {
             throw YouTubeServiceError.missingAPIKey
         }
 
-        let videoIds = try await search(query: query, maxResults: maxResults)
+        let videoIds = try await search(query: query, maxResults: maxResults, key: key)
         guard !videoIds.isEmpty else { return [] }
-        return try await videoDetails(ids: videoIds)
+        return try await videoDetails(ids: videoIds, key: key)
     }
 
-    private static func search(query: String, maxResults: Int) async throws -> [(id: String, title: String, channel: String, thumb: String?)] {
+    private static func search(
+        query: String, maxResults: Int, key: String
+    ) async throws -> [(id: String, title: String, channel: String, thumb: String?)] {
         var components = URLComponents(string: "\(baseURL)/search")!
         components.queryItems = [
             URLQueryItem(name: "part", value: "snippet"),
@@ -53,11 +55,11 @@ enum YouTubeService {
             URLQueryItem(name: "type", value: "video"),
             URLQueryItem(name: "maxResults", value: String(maxResults)),
             URLQueryItem(name: "relevanceLanguage", value: "en"),
-            URLQueryItem(name: "key", value: APIKeys.youTubeDataAPIKey),
+            URLQueryItem(name: "key", value: key),
         ]
 
-        let (data, response) = try await URLSession.shared.data(from: components.url!)
-        try validate(response)
+        let (data, response) = try await send(components.url!)
+        try validate(response, data: data)
 
         let decoded = try JSONDecoder().decode(YouTubeSearchResponse.self, from: data)
         return decoded.items.compactMap { item in
@@ -71,16 +73,18 @@ enum YouTubeService {
         }
     }
 
-    private static func videoDetails(ids: [(id: String, title: String, channel: String, thumb: String?)]) async throws -> [YouTubeVideoResult] {
+    private static func videoDetails(
+        ids: [(id: String, title: String, channel: String, thumb: String?)], key: String
+    ) async throws -> [YouTubeVideoResult] {
         var components = URLComponents(string: "\(baseURL)/videos")!
         components.queryItems = [
             URLQueryItem(name: "part", value: "contentDetails"),
             URLQueryItem(name: "id", value: ids.map(\.id).joined(separator: ",")),
-            URLQueryItem(name: "key", value: APIKeys.youTubeDataAPIKey),
+            URLQueryItem(name: "key", value: key),
         ]
 
-        let (data, response) = try await URLSession.shared.data(from: components.url!)
-        try validate(response)
+        let (data, response) = try await send(components.url!)
+        try validate(response, data: data)
 
         let decoded = try JSONDecoder().decode(YouTubeVideosResponse.self, from: data)
         let durationsById = Dictionary(uniqueKeysWithValues: decoded.items.map {
@@ -98,9 +102,23 @@ enum YouTubeService {
         }
     }
 
-    private static func validate(_ response: URLResponse) throws {
+    private static func send(_ url: URL) async throws -> (Data, URLResponse) {
+        var request = URLRequest(url: url)
+        if let bundleID = Bundle.main.bundleIdentifier {
+            request.setValue(bundleID, forHTTPHeaderField: "X-Ios-Bundle-Identifier")
+        }
+        return try await URLSession.shared.data(for: request)
+    }
+
+    private static func validate(_ response: URLResponse, data: Data) throws {
         guard let http = response as? HTTPURLResponse else { throw YouTubeServiceError.invalidResponse }
-        guard (200...299).contains(http.statusCode) else { throw YouTubeServiceError.httpError(http.statusCode) }
+        guard !(200...299).contains(http.statusCode) else { return }
+
+        if let googleError = try? JSONDecoder().decode(GoogleAPIErrorEnvelope.self, from: data) {
+            let reason = googleError.error.errors?.first?.reason ?? "unknown"
+            throw YouTubeServiceError.apiError(reason: "\(googleError.error.message) (HTTP \(http.statusCode), reason: \(reason))")
+        }
+        throw YouTubeServiceError.apiError(reason: "YouTube API request failed (HTTP \(http.statusCode)).")
     }
 
     private static func minutes(fromISO8601Duration duration: String) -> Int {
@@ -161,5 +179,16 @@ private struct YouTubeVideosResponse: Decodable {
     }
     struct ContentDetails: Decodable {
         let duration: String
+    }
+}
+
+private struct GoogleAPIErrorEnvelope: Decodable {
+    let error: GoogleAPIError
+    struct GoogleAPIError: Decodable {
+        let message: String
+        let errors: [ErrorDetail]?
+        struct ErrorDetail: Decodable {
+            let reason: String
+        }
     }
 }

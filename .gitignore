@@ -1,2 +1,9 @@
 # API keys
-Secrets.xcconfig
+Config/Secrets.xcconfig
+
+# Standard ignores
+.DS_Store
+*.xcuserstate
+DerivedData/
+.build/
+*.xcworkspace/xcuserdata/

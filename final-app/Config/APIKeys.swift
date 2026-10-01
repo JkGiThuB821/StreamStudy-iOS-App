@@ -8,6 +8,15 @@
 import Foundation
 
 enum APIKeys {
-    static let youTubeDataAPIKey =
-    Bundle.main.object(forInfoDictionaryKey: "YOUTUBE_DATA_API_KEY") as? String ?? ""
+    /// nil if Secrets.xcconfig isn't wired up yet, or the key is still the
+    /// placeholder value — callers (YouTubeService) treat both as "no key".
+    static var youTubeDataAPIKey: String? {
+        guard let key = Bundle.main.object(forInfoDictionaryKey: "YOUTUBE_API_KEY") as? String,
+              !key.isEmpty,
+              key != "YOUR_YOUTUBE_API_KEY_HERE"
+        else {
+            return nil
+        }
+        return key
+    }
 }
