@@ -13,6 +13,7 @@ import FirebaseCore
 struct StreamStudyApp: App {
     @StateObject private var authManager = AuthManager()
     @StateObject private var syncService = FirestoreSyncService()
+    @StateObject private var deepLinkRouter = DeepLinkRouter()
 
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -40,6 +41,8 @@ struct StreamStudyApp: App {
             RootView()
                 .environmentObject(authManager)
                 .environmentObject(syncService)
+                .environmentObject(deepLinkRouter)
+                .onOpenURL{ deepLinkRouter.handle(url: $0) }
         }
         .modelContainer(sharedModelContainer)
     }
