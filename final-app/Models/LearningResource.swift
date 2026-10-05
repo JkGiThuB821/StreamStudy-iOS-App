@@ -61,12 +61,12 @@ final class LearningResource {
         sourceName: String,
         type: ResourceType,
         durationMinutes: Int,
-        resouceDescription: String = "",
+        resourceDescription: String = "",
         thumbnailURLString: String? = nil
     ) {
         self.id = UUID()
         self.title = title
-        self.resourceDescription = resouceDescription
+        self.resourceDescription = resourceDescription
         self.urlString = urlString
         self.thumbnailURLString = thumbnailURLString
         self.sourceName = sourceName

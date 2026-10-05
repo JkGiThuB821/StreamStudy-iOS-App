@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E76B404930736CDE0090F220 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = E76B404830736CDE0090F220 /* FirebaseFirestore */; };
 		E76F30A830696C8B00AD3F58 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */; };
 		E76F30AC3069705E00AD3F58 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E76F30AB3069705E00AD3F58 /* FirebaseAuth */; };
 		E7D39573306BA60F000136F2 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E7D39571306BA5FF000136F2 /* .gitignore */; };
@@ -45,6 +46,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E76F30AC3069705E00AD3F58 /* FirebaseAuth in Frameworks */,
+				E76B404930736CDE0090F220 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +100,7 @@
 			name = "final-app";
 			packageProductDependencies = (
 				E76F30AB3069705E00AD3F58 /* FirebaseAuth */,
+				E76B404830736CDE0090F220 /* FirebaseFirestore */,
 			);
 			productName = "final-app";
 			productReference = E74DC123305BC2CE00DF9FDE /* final-app.app */;
@@ -393,6 +396,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		E76B404830736CDE0090F220 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E76F30A930696E6100AD3F58 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
 		E76F30AB3069705E00AD3F58 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E76F30A930696E6100AD3F58 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
