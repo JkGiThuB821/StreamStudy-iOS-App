@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct AccountView: View {
     @EnvironmentObject private var authManager: AuthManager
+    @EnvironmentObject private var syncService: FirestoreSyncService
+    @Environment(\.modelContext) private var modelContext
     @State private var tab: Tab = .profile
     @State private var appearance: Appearance = .dark
 
@@ -65,12 +68,7 @@ struct AccountView: View {
                 row(icon: "square.and.arrow.up", label: "Export Data")
             }
 
-            HStack {
-                Text("iCloud / Firestore Sync")
-                Spacer()
-                Button("Sync Now") {}
-                    .font(.spaceGrotesk(size: 12, weight: .bold))
-            }
+            syncRow
 
             Button("Sign Out", role: .destructive) {
                 authManager.signOut()
@@ -79,6 +77,40 @@ struct AccountView: View {
         }
         .padding(.horizontal)
     }
+    
+    private var syncRow: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("iCloud / Firestore Sync")
+                    Spacer()
+                    if syncService.isSyncing {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Button("Sync Now") {
+                            guard let uid = authManager.uid else { return }
+                            Task { await syncService.syncNow(uid: uid, modelContext: modelContext) }
+                        }
+                        .font(.caption.bold())
+                    }
+                }
+
+                if let lastSyncedAt = syncService.lastSyncedAt {
+                    Text("Last synced \(lastSyncedAt.formatted(.relative(presentation: .named)))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Not synced yet this session")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let syncError = syncService.syncError {
+                    Text(syncError)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
 
     private var notificationsSection: some View {
         VStack(alignment: .leading, spacing: 16) {

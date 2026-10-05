@@ -13,6 +13,7 @@ import Combine
 final class AuthManager: ObservableObject {
     @Published var isSignedIn: Bool = false
     @Published var userEmail: String?
+    @Published var uid: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
@@ -23,6 +24,7 @@ final class AuthManager: ObservableObject {
             guard let self else { return }
             self.isSignedIn = user != nil
             self.userEmail = user?.email
+            self.uid = user?.uid
         }
     }
 
