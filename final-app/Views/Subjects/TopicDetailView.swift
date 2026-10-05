@@ -175,49 +175,29 @@ struct TopicDetailView: View {
             isDiscovering = false
         }
     }
-
-//    private func resourceRow(_ resource: LearningResource) -> some View {
-//        HStack {
-//            Image(systemName: resource.type.sfSymbol)
-//                .foregroundStyle(.red)
-//            VStack(alignment: .leading, spacing: 2) {
-//                Text(resource.title).font(.spaceGrotesk(size: 15, weight: .bold))
-//                Text("\(resource.sourceName) · \(resource.durationMinutes) min")
-//                    .font(.sgCaption)
-//                    .foregroundStyle(.secondary)
-//            }
-//            Spacer()
-//            Button {
-//                resource.isCompleted.toggle()
-//            } label: {
-//                Image(systemName: resource.isCompleted ? "checkmark.circle.fill" : "circle")
-//                    .foregroundStyle(resource.isCompleted ? .green : .secondary)
-//            }
-//            .buttonStyle(.plain)
-//        }
-//    }
     
     private var completedResourceCount: Int {
         topic.resources.filter(\.isCompleted).count
     }
     
     private func resourceRow(_ resource: LearningResource) -> some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                resource.isCompleted.toggle()
+        HStack(spacing: 12) {
+            
+            // MARK: Resource icon
+            Image(systemName: resource.type.sfSymbol)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(
+                    resource.isCompleted ? Color.secondary : .red
+                )
 
-                if !topic.resources.isEmpty {
-                    topic.isCompleted = topic.resources.allSatisfy(\.isCompleted)
+            // MARK: Resource information
+            Button {
+                guard let url = URL(string: resource.urlString) else {
+                    return
                 }
-            }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: resource.type.sfSymbol)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(
-                        resource.isCompleted ? Color.secondary : .red
-                    )
 
+                UIApplication.shared.open(url)
+            } label: {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(resource.title)
                         .font(.spaceGrotesk(size: 15, weight: .bold))
@@ -229,23 +209,36 @@ struct TopicDetailView: View {
                             color: .secondary
                         )
 
-                    Text("\(resource.sourceName) · \(resource.durationMinutes) min")
+                    Text("\(resource.sourceName) Â· \(resource.durationMinutes) min")
                         .font(.sgCaption)
                         .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                if resource.isCompleted {
-                    Text("Completed")
-                        .font(.sgCaption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
-            .padding(.vertical, 4)
+            .buttonStyle(.plain)
+
+            // MARK: Completion action
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    resource.isCompleted.toggle()
+
+                    // A topic becomes complete when all its resources
+                    // have been completed.
+                    if !topic.resources.isEmpty {
+                        topic.isCompleted = topic.resources.allSatisfy(\.isCompleted)
+                    }
+                }
+            } label: {
+                Text(resource.isCompleted ? "Completed" : "Mark complete")
+                    .font(.sgCaption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(
+                        resource.isCompleted ? .secondary : Color.red
+                    )
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .padding(.vertical, 6)
     }
 }
