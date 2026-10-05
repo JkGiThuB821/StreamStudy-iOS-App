@@ -37,9 +37,14 @@ final class Subject {
         self.createdAt = .now
     }
     
+//    var progress: Double {
+//        guard !topics.isEmpty else { return 0 }
+//        let completed = topics.filter { $0.isCompleted }.count
+//        return Double(completed) / Double(topics.count)
+//    }
+    
     var progress: Double {
         guard !topics.isEmpty else { return 0 }
-        let completed = topics.filter { $0.isCompleted }.count
-        return Double(completed) / Double(topics.count)
+        return topics.map(\.progress).reduce(0, +) / Double(topics.count)
     }
 }
