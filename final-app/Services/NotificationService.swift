@@ -21,12 +21,16 @@ final class NotificationService {
         do {
             _ = try await center.requestAuthorization(options: [.alert, .sound, .badge])
         } catch {
-            print("Notificat    ion permission failed: \(error.localizedDescription)")
+            print("Notification permission failed: \(error.localizedDescription)")
         }
     }
 
     func scheduleNotifications(for deadlines: [Deadline]) async {
-        await center.removeAllPendingNotificationRequests()
+        center.removeAllPendingNotificationRequests()
+
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized
+                || settings.authorizationStatus == .provisional else { return }
 
         for deadline in deadlines where deadline.dueDate > .now {
             let content = UNMutableNotificationContent()
@@ -62,7 +66,6 @@ final class NotificationService {
     }
 
     private func reminderDate(for deadline: Deadline) -> Date {
-        // Remind one day before, but never schedule a notification in the past.
         let oneDayBefore = deadline.dueDate.addingTimeInterval(-24 * 60 * 60)
         return max(oneDayBefore, Date.now.addingTimeInterval(60))
     }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MainTabView: View {
 
@@ -17,7 +18,17 @@ struct MainTabView: View {
         case profile
     }
 
+    @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+    @Query private var topics: [Topic]
+    @Query private var deadlines: [Deadline]
+
     @State private var selectedTab: Tab = .home
+    @State private var homePath = NavigationPath()
+
+    // Changes whenever a deadline is added, removed or edited, so reminders get rescheduled.
+    private var deadlineSignature: [String] {
+        deadlines.map { "\($0.id)-\($0.title)-\($0.dueDate.timeIntervalSince1970)" }
+    }
 
     var body: some View {
 
@@ -25,7 +36,7 @@ struct MainTabView: View {
 
             // MARK: Home
 
-            NavigationStack {
+            NavigationStack(path: $homePath) {
                 HomeView()
             }
             .tag(Tab.home)
@@ -76,6 +87,36 @@ struct MainTabView: View {
         .toolbar(.hidden, for: .tabBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             CustomTabBar(selectedTab: $selectedTab)
+        }
+        .task(id: deadlineSignature) {
+            // Only prompts the first time; afterwards it returns the saved choice immediately.
+            await NotificationService.shared.requestPermission()
+            await NotificationService.shared.scheduleNotifications(for: deadlines)
+        }
+        .onAppear {
+            route(deepLinkRouter.destination)
+        }
+        .onChange(of: deepLinkRouter.destination) { _, destination in
+            route(destination)
+        }
+    }
+
+    // MARK: Deep Linking
+
+    private func route(_ destination: DeepLinkRouter.Destination?) {
+        switch destination {
+        case .topic(let id):
+            selectedTab = .home
+            homePath = NavigationPath()
+            if let topic = topics.first(where: { $0.id == id }) {
+                homePath.append(topic)
+            }
+            deepLinkRouter.clear()
+        case .calendar:
+            // CalendarView reads the deadline ID and clears the destination itself.
+            selectedTab = .calendar
+        case nil:
+            break
         }
     }
 }
