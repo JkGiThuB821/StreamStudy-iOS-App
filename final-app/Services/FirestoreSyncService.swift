@@ -109,6 +109,7 @@ final class FirestoreSyncService: ObservableObject {
                 topic.isCompleted = dto.isCompleted
                 topic.difficulty = DifficultyRating(rawValue: dto.difficulty) ?? .notRated
                 topic.hasSearchedForResources = dto.hasSearchedForResources
+                topic.lessonPlanData = dto.lessonPlanJSON?.data(using: .utf8)
                 topic.subject = subject
                 modelContext.insert(topic)
                 topicsById[dto.id] = topic

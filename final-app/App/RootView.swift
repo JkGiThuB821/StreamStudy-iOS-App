@@ -41,13 +41,17 @@ struct RootView: View {
     }
     
     private func pushInBackgroundTask(uid: String) {
-        var taskID: UIBackgroundTaskIdentifier = .invalid
-        taskID = UIApplication.shared.beginBackgroundTask(withName: "FirestorePush") {
-            UIApplication.shared.endBackgroundTask(taskID)
+        let task = BackgroundTaskBox()
+        task.id = UIApplication.shared.beginBackgroundTask(withName: "FirestorePush") {
+            UIApplication.shared.endBackgroundTask(task.id)
         }
         Task {
             await syncService.push(uid: uid, modelContext: modelContext)
-            UIApplication.shared.endBackgroundTask(taskID)
+            UIApplication.shared.endBackgroundTask(task.id)
         }
     }
+}
+
+private nonisolated final class BackgroundTaskBox: @unchecked Sendable {
+    var id: UIBackgroundTaskIdentifier = .invalid
 }

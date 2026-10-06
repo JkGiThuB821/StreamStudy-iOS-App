@@ -10,6 +10,7 @@ import Foundation
 struct YouTubeVideoResult: Identifiable {
     let id: String
     let title: String
+    let description: String
     let channelTitle: String
     let thumbnailURL: String?
     let durationMinutes: Int
@@ -47,7 +48,7 @@ enum YouTubeService {
 
     private static func search(
         query: String, maxResults: Int, key: String
-    ) async throws -> [(id: String, title: String, channel: String, thumb: String?)] {
+    ) async throws -> [(id: String, title: String, description: String, channel: String, thumb: String?)] {
         var components = URLComponents(string: "\(baseURL)/search")!
         components.queryItems = [
             URLQueryItem(name: "part", value: "snippet"),
@@ -67,6 +68,7 @@ enum YouTubeService {
             return (
                 id: videoId,
                 title: item.snippet.title,
+                description: item.snippet.description ?? "",
                 channel: item.snippet.channelTitle,
                 thumb: item.snippet.thumbnails.medium?.url ?? item.snippet.thumbnails.defaultThumb?.url
             )
@@ -74,7 +76,7 @@ enum YouTubeService {
     }
 
     private static func videoDetails(
-        ids: [(id: String, title: String, channel: String, thumb: String?)], key: String
+        ids: [(id: String, title: String, description: String, channel: String, thumb: String?)], key: String
     ) async throws -> [YouTubeVideoResult] {
         var components = URLComponents(string: "\(baseURL)/videos")!
         components.queryItems = [
@@ -94,7 +96,8 @@ enum YouTubeService {
         return ids.map { entry in
             YouTubeVideoResult(
                 id: entry.id,
-                title: entry.title,
+                title: decodeHTMLEntities(entry.title),
+                description: decodeHTMLEntities(entry.description),
                 channelTitle: entry.channel,
                 thumbnailURL: entry.thumb,
                 durationMinutes: durationsById[entry.id] ?? 0
@@ -119,6 +122,12 @@ enum YouTubeService {
             throw YouTubeServiceError.apiError(reason: "\(googleError.error.message) (HTTP \(http.statusCode), reason: \(reason))")
         }
         throw YouTubeServiceError.apiError(reason: "YouTube API request failed (HTTP \(http.statusCode)).")
+    }
+
+    // search.list returns titles with HTML entities (e.g. &#39; for an apostrophe).
+    private static func decodeHTMLEntities(_ text: String) -> String {
+        [("&amp;", "&"), ("&quot;", "\""), ("&#39;", "'"), ("&lt;", "<"), ("&gt;", ">")]
+            .reduce(text) { $0.replacingOccurrences(of: $1.0, with: $1.1) }
     }
 
     private static func minutes(fromISO8601Duration duration: String) -> Int {
@@ -155,6 +164,7 @@ private struct YouTubeSearchResponse: Decodable {
     }
     struct Snippet: Decodable {
         let title: String
+        let description: String?
         let channelTitle: String
         let thumbnails: Thumbnails
     }

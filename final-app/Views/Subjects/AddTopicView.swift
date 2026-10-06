@@ -22,9 +22,20 @@ struct AddTopicView: View {
         NavigationStack {
             Form {
                 Section("New Topic") {
-                    TextField("Topic title (e.g. Big O Notation)", text: $title)
-                    TextField("Short description", text: $description, axis: .vertical)
-                        .lineLimit(2...4)
+                    TextField("Topic title (e.g. SwiftData Relationships)", text: $title)
+                }
+
+                Section {
+                    TextField(
+                        "e.g. Assignment 2: model a one-to-many relationship and query it with #Predicate",
+                        text: $description,
+                        axis: .vertical
+                    )
+                    .lineLimit(3...6)
+                } header: {
+                    Text("What do you need to learn?")
+                } footer: {
+                    Text("Be specific. The description is used to find relevant videos, articles and docs, and to build your step-by-step lesson plan.")
                 }
 
                 Section {

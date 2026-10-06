@@ -12,8 +12,23 @@ struct TopicDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var topic: Topic
     @State private var showingAddResource = false
-    @State private var isDiscovering = false
+    @State private var phase: Phase = .idle
     @State private var discoveryError: String?
+    @State private var discoverySummary: String?
+
+    enum Phase: Equatable {
+        case idle, searching, planning
+
+        var message: String {
+            switch self {
+            case .idle: return ""
+            case .searching: return "Finding relevant videos, articles & docs…"
+            case .planning: return "Building your lesson plan…"
+            }
+        }
+    }
+
+    private var isBusy: Bool { phase != .idle }
     @State private var isEditingTag = false
     @State private var tagDraft = ""
 
@@ -73,6 +88,21 @@ struct TopicDetailView: View {
             }
 
             Section {
+                TextField(
+                    "e.g. Assignment 2: model a one-to-many relationship in SwiftData and query it with #Predicate",
+                    text: $topic.topicDescription,
+                    axis: .vertical
+                )
+                .lineLimit(3...8)
+            } header: {
+                Text("What do you need to learn?")
+            } footer: {
+                Text("Be specific: concepts, the assignment, the tools. This description is used to find more relevant resources and to shape your lesson plan.")
+            }
+
+            lessonPlanSection
+
+            Section {
                 if isEditingTag {
                     TextField("e.g. swift, swiftui, ios, combine, coredata", text: $tagDraft)
                         .textInputAutocapitalization(.never)
@@ -104,9 +134,9 @@ struct TopicDetailView: View {
             Section {
                 Button(action: runDiscovery) {
                     HStack {
-                        if isDiscovering {
+                        if isBusy {
                             ProgressView().padding(.trailing, 4)
-                            Text("Searching YouTube, dev.to & docs…")
+                            Text(phase.message)
                         } else {
                             Label(
                                 topic.hasSearchedForResources ? "Search Again" : "Find Resources",
@@ -115,14 +145,20 @@ struct TopicDetailView: View {
                         }
                     }
                 }
-                .disabled(isDiscovering)
+                .disabled(isBusy)
+
+                if let discoverySummary {
+                    Text(discoverySummary)
+                        .font(.sgCaption)
+                        .foregroundStyle(.secondary)
+                }
 
                 if topic.hasSearchedForResources {
-                    Text("Already searched once: this will call the YouTube API again (costs quota). Use it after changing the search tag above.")
+                    Text("Already searched once: this will call the YouTube API again (costs quota). Use it after changing the description or search tag.")
                         .font(.sgCaption2)
                         .foregroundStyle(.orange)
                 } else {
-                    Text("Searches once for “\(ResourceDiscoveryService.tag(for: topic))” and caches results — this won't re-query automatically.")
+                    Text("Searches once using the title and description above, caches the results and builds a lesson plan. It won't re-query automatically.")
                         .font(.sgCaption2)
                         .foregroundStyle(.secondary)
                 }
@@ -161,33 +197,107 @@ struct TopicDetailView: View {
         }
     }
 
-    private func runDiscovery() {
-        isDiscovering = true
-        discoveryError = nil
-        Task {
-            let outcome = await ResourceDiscoveryService.discoverResources(for: topic, modelContext: modelContext)
-            if outcome.hasPartialFailure {
-                discoveryError = outcome.failureMessages.joined(separator: "\n")
+    // MARK: - Lesson plan
+
+    @ViewBuilder
+    private var lessonPlanSection: some View {
+        Section {
+            if let plan = topic.lessonPlan {
+                NavigationLink {
+                    LessonPlanView(topic: topic)
+                } label: {
+                    lessonPlanSummary(plan)
+                }
+            } else {
+                Button(action: buildLessonPlan) {
+                    Label("Build Lesson Plan", systemImage: "list.number")
+                }
+                .disabled(isBusy || topic.resources.isEmpty)
             }
-            isDiscovering = false
-        }
-    }
-    
-    // Completing a resource records its duration as study time, which feeds the
-    // "Study Activity" chart and "This week" total on the Progress tab.
-    // Un-completing it removes today's matching entry so time isn't double counted.
-    private func logStudyTime(for resource: LearningResource) {
-        if resource.isCompleted {
-            let entry = StudyProgress(minutesSpent: resource.durationMinutes)
-            entry.topic = topic
-            modelContext.insert(entry)
-        } else if let entry = topic.progressEntries
-            .filter({ Calendar.current.isDateInToday($0.date) && $0.minutesSpent == resource.durationMinutes })
-            .max(by: { $0.date < $1.date }) {
-            modelContext.delete(entry)
+        } header: {
+            Text("Lesson Plan")
+        } footer: {
+            if topic.lessonPlan == nil {
+                Text(topic.resources.isEmpty
+                     ? "Find resources first, then they'll be arranged into step-by-step lessons."
+                     : "Arranges these resources into clear steps, with practice tasks and checkpoints.")
+            }
         }
     }
 
+    private func lessonPlanSummary(_ plan: LessonPlan) -> some View {
+        let completed = plan.steps.filter { topic.isStepCompleted($0) }.count
+
+        return VStack(alignment: .leading, spacing: 6) {
+            Label(
+                plan.source == .gemini ? "AI lesson plan" : "Lesson plan",
+                systemImage: plan.source == .gemini ? "sparkles" : "list.number"
+            )
+            .font(.spaceGrotesk(size: 15, weight: .bold))
+
+            Text("\(completed)/\(plan.steps.count) steps · \(plan.totalMinutes) min")
+                .font(.sgCaption)
+                .foregroundStyle(.secondary)
+
+            if let next = topic.nextLessonStep {
+                Text("Up next: \(next.title)")
+                    .font(.sgCaption)
+                    .foregroundStyle(.red)
+            } else {
+                Text("All steps complete")
+                    .font(.sgCaption)
+                    .foregroundStyle(.green)
+            }
+
+            ProgressView(value: Double(completed), total: Double(max(plan.steps.count, 1)))
+                .tint(.red)
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Actions
+
+    // Finds resources using the description, then builds a lesson plan from them.
+    private func runDiscovery() {
+        phase = .searching
+        discoveryError = nil
+        discoverySummary = nil
+        Task {
+            let outcome = await ResourceDiscoveryService.discoverResources(for: topic, modelContext: modelContext)
+            var messages = outcome.failureMessages
+
+            if let plan = outcome.searchPlan {
+                var summary = "Added \(outcome.addedCount) resources"
+                if outcome.filteredOutCount > 0 {
+                    summary += " (\(outcome.filteredOutCount) skipped as not relevant)"
+                }
+                summary += ". \(plan.usedAI ? "AI-planned" : "Keyword") search: “\(plan.youtubeQuery)”"
+                discoverySummary = summary
+            }
+
+            if !topic.resources.isEmpty {
+                phase = .planning
+                let result = await LessonPlanService.generatePlan(for: topic)
+                topic.lessonPlan = result.plan
+                if let warning = result.warning { messages.append(warning) }
+            }
+
+            discoveryError = messages.isEmpty ? nil : messages.joined(separator: "\n")
+            phase = .idle
+        }
+    }
+
+    private func buildLessonPlan() {
+        phase = .planning
+        discoveryError = nil
+        Task {
+            let result = await LessonPlanService.generatePlan(for: topic)
+            topic.lessonPlan = result.plan
+            discoveryError = result.warning
+            phase = .idle
+        }
+    }
+    
     private var completedResourceCount: Int {
         topic.resources.filter(\.isCompleted).count
     }
@@ -235,14 +345,7 @@ struct TopicDetailView: View {
                 // MARK: Completion action
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        resource.isCompleted.toggle()
-                        logStudyTime(for: resource)
-
-                        // A topic becomes complete when all its resources
-                        // have been completed.
-                        if !topic.resources.isEmpty {
-                            topic.isCompleted = topic.resources.allSatisfy(\.isCompleted)
-                        }
+                        topic.toggleCompletion(of: resource, modelContext: modelContext)
                     }
                 } label: {
                     Text(resource.isCompleted ? "Completed" : "Mark complete")

@@ -30,7 +30,9 @@ enum RecommendationEngine {
                 TopicRecommendation(
                     topic: topic,
                     score: score(for: topic, weights: weights),
-                    nextResource: topic.resources
+                    // Follow the lesson plan's order when there is one,
+                    // otherwise start with the shortest unfinished resource.
+                    nextResource: topic.nextPlannedResource ?? topic.resources
                         .filter { !$0.isCompleted }
                         .sorted { $0.durationMinutes < $1.durationMinutes }
                         .first

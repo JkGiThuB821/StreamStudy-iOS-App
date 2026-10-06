@@ -25,6 +25,8 @@ final class Topic {
     var createdAt: Date
     var searchTag: String
     var hasSearchedForResources: Bool
+    // JSON-encoded LessonPlan. Optional so existing stores migrate automatically.
+    var lessonPlanData: Data?
 
     var subject: Subject?
 
@@ -59,5 +61,73 @@ final class Topic {
 
     var totalDurationMinutes: Int {
         resources.reduce(0) { $0 + $1.durationMinutes }
+    }
+
+    // MARK: - Completion
+
+    func toggleCompletion(of resource: LearningResource, modelContext: ModelContext) {
+        resource.isCompleted.toggle()
+
+        if resource.isCompleted {
+            let entry = StudyProgress(minutesSpent: resource.durationMinutes)
+            entry.topic = self
+            modelContext.insert(entry)
+        } else if let entry = progressEntries
+            .filter({ Calendar.current.isDateInToday($0.date) && $0.minutesSpent == resource.durationMinutes })
+            .max(by: { $0.date < $1.date }) {
+            modelContext.delete(entry)
+        }
+
+        if !resources.isEmpty {
+            isCompleted = resources.allSatisfy(\.isCompleted)
+        }
+    }
+
+    // Ticks off a practice/review step (steps without resources).
+    func toggleManualCompletion(of step: LessonStep) {
+        guard var plan = lessonPlan,
+              let index = plan.steps.firstIndex(where: { $0.id == step.id }) else { return }
+        plan.steps[index].isManuallyCompleted.toggle()
+        lessonPlan = plan
+    }
+
+    // MARK: - Lesson plan
+
+    var lessonPlan: LessonPlan? {
+        get {
+            guard let lessonPlanData else { return nil }
+            return try? JSONDecoder().decode(LessonPlan.self, from: lessonPlanData)
+        }
+        set {
+            lessonPlanData = newValue.flatMap { try? JSONEncoder().encode($0) }
+        }
+    }
+
+    func stepResources(for step: LessonStep) -> [LearningResource] {
+        step.resourceIDs.compactMap { id in resources.first { $0.id == id } }
+    }
+
+    func isStepCompleted(_ step: LessonStep) -> Bool {
+        let items = stepResources(for: step)
+        return items.isEmpty
+            ? step.isManuallyCompleted
+            : items.allSatisfy(\.isCompleted)
+    }
+
+    // The first unfinished step of the lesson plan, if there is one.
+    var nextLessonStep: LessonStep? {
+        lessonPlan?.steps.first { !isStepCompleted($0) }
+    }
+
+    // Next resource to study: follows the lesson plan order when a plan exists.
+    var nextPlannedResource: LearningResource? {
+        if let plan = lessonPlan {
+            for step in plan.steps {
+                if let resource = stepResources(for: step).first(where: { !$0.isCompleted }) {
+                    return resource
+                }
+            }
+        }
+        return nil
     }
 }

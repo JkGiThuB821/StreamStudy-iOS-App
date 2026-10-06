@@ -27,6 +27,8 @@ struct TopicDTO: Codable {
     var createdAt: Date
     var searchTag: String
     var hasSearchedForResources: Bool
+    // JSON-encoded LessonPlan. Optional so older Firestore documents still decode.
+    var lessonPlanJSON: String?
 }
 
 struct ResourceDTO: Codable {
@@ -75,7 +77,8 @@ extension Topic {
         return TopicDTO(
             id: id, subjectId: subjectId, title: title, topicDescription: topicDescription,
             isCompleted: isCompleted, difficulty: difficulty.rawValue, orderIndex: orderIndex,
-            createdAt: createdAt, searchTag: searchTag, hasSearchedForResources: hasSearchedForResources
+            createdAt: createdAt, searchTag: searchTag, hasSearchedForResources: hasSearchedForResources,
+            lessonPlanJSON: lessonPlanData.flatMap { String(data: $0, encoding: .utf8) }
         )
     }
 }

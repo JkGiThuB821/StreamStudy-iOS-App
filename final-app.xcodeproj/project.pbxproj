@@ -23,17 +23,29 @@
 		E7EFAE84306E20CB004F9FAA /* Exceptions for "final-app" folder in "final-app" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Config/Secrets.xcconfig,
 				Info.plist,
 			);
 			target = E74DC122305BC2CE00DF9FDE /* final-app */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		E749C4D73074E27000266CE3 /* Exceptions for "final-app" folder in "Compile Sources" phase from "final-app" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = E74DC11F305BC2CE00DF9FDE /* Sources */;
+			membershipExceptions = (
+				Config/Secrets.xcconfig,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E74DC125305BC2CE00DF9FDE /* final-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E7EFAE84306E20CB004F9FAA /* Exceptions for "final-app" folder in "final-app" target */,
+				E749C4D73074E27000266CE3 /* Exceptions for "final-app" folder in "Compile Sources" phase from "final-app" target */,
 			);
 			path = "final-app";
 			sourceTree = "<group>";

@@ -37,7 +37,39 @@ enum CuratedResourceManifest {
         "algorithms": [
             CuratedLink(title: "Big O Notation Explained", url: "https://www.freecodecamp.org/news/big-o-notation-why-it-matters-and-why-it-doesnt-1674cfa8a23c/", sourceName: "freeCodeCamp", estimatedMinutes: 12),
         ],
+        "concurrency": [
+            CuratedLink(title: "Concurrency — The Swift Programming Language", url: "https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/", sourceName: "Swift.org", estimatedMinutes: 25),
+        ],
+        "uikit": [
+            CuratedLink(title: "UIKit documentation", url: "https://developer.apple.com/documentation/uikit", sourceName: "Apple Developer", estimatedMinutes: 20),
+        ],
+        "charts": [
+            CuratedLink(title: "Swift Charts documentation", url: "https://developer.apple.com/documentation/charts", sourceName: "Apple Developer", estimatedMinutes: 15),
+        ],
+        "mapkit": [
+            CuratedLink(title: "MapKit documentation", url: "https://developer.apple.com/documentation/mapkit", sourceName: "Apple Developer", estimatedMinutes: 15),
+        ],
+        "networking": [
+            CuratedLink(title: "URLSession documentation", url: "https://developer.apple.com/documentation/foundation/urlsession", sourceName: "Apple Developer", estimatedMinutes: 15),
+        ],
+        "firebase": [
+            CuratedLink(title: "Add Firebase to your Apple project", url: "https://firebase.google.com/docs/ios/setup", sourceName: "Firebase", estimatedMinutes: 15),
+        ],
+        "git": [
+            CuratedLink(title: "Pro Git book", url: "https://git-scm.com/book/en/v2", sourceName: "git-scm.com", estimatedMinutes: 30),
+        ],
+        "python": [
+            CuratedLink(title: "The Python Tutorial", url: "https://docs.python.org/3/tutorial/", sourceName: "Python.org", estimatedMinutes: 30),
+        ],
+        "javascript": [
+            CuratedLink(title: "JavaScript Guide", url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", sourceName: "MDN Web Docs", estimatedMinutes: 30),
+        ],
     ]
+
+    // Every tag the manifest has links for (given to Gemini so it can pick matching ones).
+    static var knownTags: Set<String> {
+        Set(manifest.keys)
+    }
 
     static func links(for tag: String) -> [CuratedLink] {
         manifest[tag.lowercased()] ?? []
