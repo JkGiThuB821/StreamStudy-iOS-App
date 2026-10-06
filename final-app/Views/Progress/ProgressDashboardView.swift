@@ -12,6 +12,10 @@ import Charts
 struct ProgressDashboardView: View {
     @Query private var subjects: [Subject]
     @Query private var progressEntries: [StudyProgress]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    @ScaledMetric(relativeTo: .subheadline) private var subjectCardWidth: CGFloat = 170
+    @ScaledMetric(relativeTo: .caption) private var chartHeight: CGFloat = 190
 
     private var overallProgress: Int {
         guard !subjects.isEmpty else { return 0 }
@@ -66,8 +70,7 @@ struct ProgressDashboardView: View {
             .padding(.horizontal)
             .padding(.bottom, 28)
         }
-        .background(Color.black)
-        .foregroundStyle(.white)
+        .background(Color.appBackground)
         .navigationTitle("Progress")
     }
 
@@ -93,18 +96,19 @@ struct ProgressDashboardView: View {
                 .tint(.red)
                 .scaleEffect(x: 1, y: 2, anchor: .center)
 
-            HStack(spacing: 0) {
+            AdaptiveStack(horizontalAlignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 0) {
                 metric(value: "\(totalMinutesThisWeek / 60)h \(totalMinutesThisWeek % 60)m", label: "This week")
-                Divider().frame(height: 38)
+                if !dynamicTypeSize.isAccessibilitySize { Divider() }
                 metric(value: "\(activeTopicsCount)", label: "Active topics")
-                Divider().frame(height: 38)
+                if !dynamicTypeSize.isAccessibilitySize { Divider() }
                 metric(value: "\(subjects.count)", label: "Subjects")
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .background(
             LinearGradient(
-                colors: [.red.opacity(0.25), .white.opacity(0.06)],
+                colors: [.red.opacity(0.25), Color.cardFill],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -134,8 +138,8 @@ struct ProgressDashboardView: View {
                             .tint(Color(hex: subject.colorHex))
                     }
                     .padding(16)
-                    .frame(width: 170, alignment: .leading)
-                    .background(.white.opacity(0.06))
+                    .frame(width: subjectCardWidth, alignment: .leading)
+                    .background(Color.cardFill)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
             }
@@ -163,9 +167,9 @@ struct ProgressDashboardView: View {
                 AxisValueLabel(format: .dateTime.weekday(.abbreviated))
             }
         }
-        .frame(height: 190)
+        .frame(height: chartHeight)
         .padding(14)
-        .background(.white.opacity(0.06))
+        .background(Color.cardFill)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
@@ -173,10 +177,10 @@ struct ProgressDashboardView: View {
         VStack(spacing: 14) {
             ForEach(subjects) { subject in
                 VStack(alignment: .leading, spacing: 7) {
-                    HStack {
+                    HStack(alignment: .firstTextBaseline) {
                         Text(subject.name)
                             .font(.spaceGrotesk(size: 14, weight: .semibold))
-                        Spacer()
+                        Spacer(minLength: 8)
                         Text("\(Int(subject.progress * 100))%")
                             .font(.spaceGrotesk(size: 14, weight: .bold))
                     }
@@ -184,7 +188,7 @@ struct ProgressDashboardView: View {
                     GeometryReader { proxy in
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(.white.opacity(0.10))
+                                .fill(Color.primary.opacity(0.10))
                             Capsule()
                                 .fill(Color(hex: subject.colorHex))
                                 .frame(width: proxy.size.width * subject.progress)
@@ -201,7 +205,7 @@ struct ProgressDashboardView: View {
             }
         }
         .padding(16)
-        .background(.white.opacity(0.06))
+        .background(Color.cardFill)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
@@ -219,7 +223,10 @@ struct ProgressDashboardView: View {
                 .font(.sgCaption2)
                 .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity)
+        .frame(
+            maxWidth: .infinity,
+            alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .center
+        )
     }
 }
 

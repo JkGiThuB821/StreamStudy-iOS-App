@@ -17,6 +17,10 @@ struct CalendarView: View {
     @State private var selectedDate = Date.now
     @State private var showingAddDeadline = false
 
+    @ScaledMetric(relativeTo: .footnote) private var dayCircleSize: CGFloat = 38
+    @ScaledMetric(relativeTo: .footnote) private var dayCellHeight: CGFloat = 56
+    @ScaledMetric(relativeTo: .footnote) private var monthButtonSize: CGFloat = 32
+
     private var selectedDeadlines: [Deadline] {
         deadlines.filter {
             Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate)
@@ -39,8 +43,7 @@ struct CalendarView: View {
             .padding(.horizontal)
             .padding(.bottom, 30)
         }
-        .background(Color.black)
-        .foregroundStyle(.white)
+        .background(Color.appBackground)
         .navigationTitle("Calendar")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -119,14 +122,9 @@ struct CalendarView: View {
                         changeMonth(by: -1)
                     } label: {
                         Image(systemName: "chevron.left")
-                            .font(
-                                .system(
-                                    size: 13,
-                                    weight: .bold
-                                )
-                            )
-                            .frame(width: 32, height: 32)
-                            .background(.white.opacity(0.08))
+                            .font(.footnote.bold())
+                            .frame(width: monthButtonSize, height: monthButtonSize)
+                            .background(Color.cardFill)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -135,14 +133,9 @@ struct CalendarView: View {
                         changeMonth(by: 1)
                     } label: {
                         Image(systemName: "chevron.right")
-                            .font(
-                                .system(
-                                    size: 13,
-                                    weight: .bold
-                                )
-                            )
-                            .frame(width: 32, height: 32)
-                            .background(.white.opacity(0.08))
+                            .font(.footnote.bold())
+                            .frame(width: monthButtonSize, height: monthButtonSize)
+                            .background(Color.cardFill)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -182,6 +175,8 @@ struct CalendarView: View {
                             )
                         )
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .frame(maxWidth: .infinity)
                 }
             }
@@ -231,8 +226,8 @@ struct CalendarView: View {
                                 : Color.clear
                         )
                         .frame(
-                            width: 38,
-                            height: 38
+                            width: dayCircleSize,
+                            height: dayCircleSize
                         )
 
                     if isToday && !isSelected {
@@ -242,8 +237,8 @@ struct CalendarView: View {
                                 lineWidth: 1.5
                             )
                             .frame(
-                                width: 38,
-                                height: 38
+                                width: dayCircleSize,
+                                height: dayCircleSize
                             )
                     }
 
@@ -257,6 +252,9 @@ struct CalendarView: View {
                                 : .medium
                         )
                     )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .foregroundStyle(isSelected ? Color.white : Color.primary)
                 }
 
                 HStack(spacing: 3) {
@@ -282,11 +280,10 @@ struct CalendarView: View {
             }
             .frame(
                 maxWidth: .infinity,
-                minHeight: 56
+                minHeight: dayCellHeight
             )
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.white)
         .opacity(
             day.isInDisplayedMonth
                 ? 1
@@ -297,7 +294,7 @@ struct CalendarView: View {
     // MARK: - Selected Day
 
     private var selectedDayHeader: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(
                     selectedDate.formatted(
@@ -355,7 +352,7 @@ struct CalendarView: View {
             if selectedDeadlines.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle")
-                        .font(.system(size: 28))
+                        .font(.title)
                         .foregroundStyle(.green)
 
                     Text("Nothing due today")
@@ -372,9 +369,7 @@ struct CalendarView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(24)
-                .background(
-                    .white.opacity(0.05)
-                )
+                .background(Color.cardFill)
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: 16
@@ -405,16 +400,11 @@ struct CalendarView: View {
                             weight: .bold
                         )
                     )
-                    .lineLimit(2)
+                    .lineLimit(3)
 
                 HStack(spacing: 6) {
                     Image(systemName: "book.closed")
-                        .font(
-                            .system(
-                                size: 11,
-                                weight: .semibold
-                            )
-                        )
+                        .font(.caption2.weight(.semibold))
 
                     Text(
                         deadline.subject?.name
@@ -471,16 +461,14 @@ struct CalendarView: View {
             RoundedRectangle(
                 cornerRadius: 18
             )
-            .fill(
-                .white.opacity(0.055)
-            )
+            .fill(Color.cardFill)
         )
         .overlay {
             RoundedRectangle(
                 cornerRadius: 18
             )
             .stroke(
-                .white.opacity(0.06),
+                Color.cardStroke,
                 lineWidth: 1
             )
         }

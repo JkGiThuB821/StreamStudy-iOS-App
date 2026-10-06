@@ -25,9 +25,14 @@ struct MainTabView: View {
     @State private var selectedTab: Tab = .home
     @State private var homePath = NavigationPath()
 
-    // Changes whenever a deadline is added, removed or edited, so reminders get rescheduled.
-    private var deadlineSignature: [String] {
-        deadlines.map { "\($0.id)-\($0.title)-\($0.dueDate.timeIntervalSince1970)" }
+    @ObservedObject private var notifications = NotificationService.shared
+    @AppStorage(NotificationService.remindersEnabledKey) private var remindersEnabled = true
+    @AppStorage(NotificationService.reminderLeadDaysKey) private var reminderLeadDays = 1
+
+    // Changes whenever a deadline, a reminder preference or the permission changes, so reminders get rescheduled.
+    private var reminderSignature: [String] {
+        ["\(remindersEnabled)-\(reminderLeadDays)-\(notifications.authorizationStatus.rawValue)"]
+            + deadlines.map { "\($0.id)-\($0.title)-\($0.dueDate.timeIntervalSince1970)" }
     }
 
     var body: some View {
@@ -88,7 +93,7 @@ struct MainTabView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             CustomTabBar(selectedTab: $selectedTab)
         }
-        .task(id: deadlineSignature) {
+        .task(id: reminderSignature) {
             // Only prompts the first time; afterwards it returns the saved choice immediately.
             await NotificationService.shared.requestPermission()
             await NotificationService.shared.scheduleNotifications(for: deadlines)
@@ -164,10 +169,12 @@ private struct CustomTabBar: View {
         .padding(.horizontal, 18)
         .padding(.top, 10)
         .padding(.bottom, 8)
-        .background(Color.black)
+        // Icons grow with Dynamic Type, capped so five tabs still fit across the screen.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+        .background(Color.appBackground)
         .overlay(alignment: .top) {
             Rectangle()
-                .fill(.white.opacity(0.06))
+                .fill(Color.cardStroke)
                 .frame(height: 1)
         }
     }
@@ -187,21 +194,15 @@ private struct CustomTabBar: View {
         } label: {
 
             Image(systemName: icon)
-                .font(
-                    .system(
-                        size: 21,
-                        weight: selectedTab == tab
-                            ? .semibold
-                            : .regular
-                    )
-                )
+                .font(.title3)
+                .fontWeight(selectedTab == tab ? .semibold : .regular)
                 .foregroundStyle(
                     selectedTab == tab
-                        ? .white
-                        : .white.opacity(0.45)
+                        ? Color.primary
+                        : Color.secondary
                 )
                 .frame(maxWidth: .infinity)
-                .frame(height: 42)
+                .frame(minHeight: 42)
                 .background {
 
                     if selectedTab == tab {

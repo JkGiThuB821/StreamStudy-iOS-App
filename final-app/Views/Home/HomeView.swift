@@ -13,6 +13,13 @@ struct HomeView: View {
     @Query(sort: \Deadline.dueDate) private var deadlines: [Deadline]
     @Query private var subjects: [Subject]
 
+    // Card sizes grow with Dynamic Type so larger text still fits.
+    @ScaledMetric(relativeTo: .subheadline) private var topicCardWidth: CGFloat = 150
+    @ScaledMetric(relativeTo: .subheadline) private var topicCardHeight: CGFloat = 110
+    @ScaledMetric(relativeTo: .subheadline) private var deadlineCardWidth: CGFloat = 140
+    @ScaledMetric(relativeTo: .subheadline) private var quickWinWidth: CGFloat = 130
+    @ScaledMetric(relativeTo: .subheadline) private var quickWinHeight: CGFloat = 100
+
     private var allTopics: [Topic] { subjects.flatMap(\.topics) }
 
     private var ranked: [TopicRecommendation] {
@@ -72,9 +79,8 @@ struct HomeView: View {
             }
             .padding(.vertical)
         }
-        .background(Color.black)
+        .background(Color.appBackground)
         .navigationTitle("Home")
-        .toolbarBackground(.black, for: .navigationBar)
         .navigationDestination(for: Topic.self) { TopicDetailView(topic: $0) }
     }
 
@@ -95,7 +101,7 @@ struct HomeView: View {
                 Text(resource?.title ?? topic.title)
                     .font(.spaceGrotesk(size: 20, weight: .bold))
                 if let resource {
-                    Text("\(topic.title) · \(resource.durationMinutes) min")
+                    Text("\(topic.title) Â· \(resource.durationMinutes) min")
                         .font(.sgSubheadline)
                         .foregroundStyle(.secondary)
                 } else {
@@ -104,7 +110,7 @@ struct HomeView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                HStack {
+                AdaptiveStack(spacing: 8) {
                     Button {
                         if let urlString = resource?.urlString, let url = URL(string: urlString) {
                             openURL(url)
@@ -112,8 +118,8 @@ struct HomeView: View {
                     } label: {
                         Label("Continue", systemImage: "play.fill")
                             .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(.white)
-                            .foregroundStyle(.black)
+                            .background(Color.primary)
+                            .foregroundStyle(Color.appBackground)
                             .clipShape(Capsule())
                     }
                     .disabled(resource == nil)
@@ -121,8 +127,8 @@ struct HomeView: View {
                     NavigationLink(value: topic) {
                         Label("More Info", systemImage: "info.circle")
                             .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(.white.opacity(0.15))
-                            .foregroundStyle(.white)
+                            .background(Color.primary.opacity(0.12))
+                            .foregroundStyle(Color.primary)
                             .clipShape(Capsule())
                     }
                 }
@@ -132,10 +138,11 @@ struct HomeView: View {
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                LinearGradient(colors: [.red.opacity(0.4), .black], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [.red.opacity(0.4), Color.appBackground], startPoint: .top, endPoint: .bottom)
             )
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
             .padding(.horizontal)
         }
     }
@@ -149,10 +156,10 @@ struct HomeView: View {
                         .font(.spaceGrotesk(size: 11, weight: .bold))
                         .padding(.horizontal, 6).padding(.vertical, 2)
                         .background(.red)
+                        .foregroundStyle(.white)
                         .clipShape(Capsule())
                 }
             }
-            .foregroundStyle(.white)
             .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -168,7 +175,7 @@ struct HomeView: View {
 
     private var dueSoonRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Due Soon").font(.sgHeadline).foregroundStyle(.white).padding(.horizontal)
+            Text("Due Soon").font(.sgHeadline).padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(upcomingDeadlines.prefix(5)) { deadline in
@@ -179,14 +186,13 @@ struct HomeView: View {
                             Text(deadline.subject?.name ?? deadline.title)
                                 .font(.sgSubheadline)
                                 .lineLimit(1)
-                            Text("\(deadline.daysRemaining) days")
+                            Text(deadline.daysRemaining == 1 ? "1 day" : "\(deadline.daysRemaining) days")
                                 .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
                         .padding()
-                        .frame(width: 140, alignment: .leading)
-                        .background(.white.opacity(0.08))
-                        .foregroundStyle(.white)
+                        .frame(width: deadlineCardWidth, alignment: .leading)
+                        .background(Color.cardFill)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
@@ -197,7 +203,7 @@ struct HomeView: View {
 
     private var quickWinsRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Quick Wins").font(.sgHeadline).foregroundStyle(.white).padding(.horizontal)
+            Text("Quick Wins").font(.sgHeadline).padding(.horizontal)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(quickWins.prefix(8)) { resource in
@@ -211,9 +217,9 @@ struct HomeView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .padding()
-                        .frame(width: 130, height: 100, alignment: .leading)
-                        .background(.white.opacity(0.08))
-                        .foregroundStyle(.white)
+                        .frame(width: quickWinWidth, alignment: .leading)
+                        .frame(minHeight: quickWinHeight, alignment: .topLeading)
+                        .background(Color.cardFill)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
@@ -225,7 +231,6 @@ struct HomeView: View {
     private func topicCard(_ topic: Topic) -> some View {
         NavigationLink(value: topic) {
             VStack(alignment: .leading, spacing: 4) {
-                Spacer()
                 Text(topic.subject?.name ?? "")
                     .font(.sgCaption2)
                     .foregroundStyle(.secondary)
@@ -236,9 +241,10 @@ struct HomeView: View {
                     .tint(.red)
             }
             .padding(10)
-            .frame(width: 150, height: 110, alignment: .leading)
+            .frame(width: topicCardWidth, alignment: .leading)
+            .frame(minHeight: topicCardHeight, alignment: .bottomLeading)
             .background(Color(hex: topic.subject?.colorHex ?? "#333333").opacity(0.5))
-            .foregroundStyle(.white)
+            .foregroundStyle(.primary)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)

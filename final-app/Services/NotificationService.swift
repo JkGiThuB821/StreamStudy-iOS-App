@@ -7,15 +7,42 @@
 
 import Foundation
 import UserNotifications
+import Combine
 
 @MainActor
-final class NotificationService {
+final class NotificationService: ObservableObject {
 
     static let shared = NotificationService()
 
+    // UserDefaults keys shared with @AppStorage in AccountView / MainTabView.
+    static let remindersEnabledKey = "deadlineRemindersEnabled"
+    static let reminderLeadDaysKey = "deadlineReminderLeadDays"
+
+    struct PendingReminder: Identifiable {
+        let id: String
+        let title: String
+        let body: String
+        let fireDate: Date?
+    }
+
+    @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
+    @Published private(set) var pendingReminders: [PendingReminder] = []
+
     private let center = UNUserNotificationCenter.current()
+    private let defaults = UserDefaults.standard
 
     private init() {}
+
+    private var remindersEnabled: Bool {
+        defaults.object(forKey: Self.remindersEnabledKey) as? Bool ?? true
+    }
+
+    private var leadDays: Int {
+        let stored = defaults.integer(forKey: Self.reminderLeadDaysKey)
+        return stored > 0 ? stored : 1
+    }
+
+    // MARK: - Permission
 
     func requestPermission() async {
         do {
@@ -23,19 +50,35 @@ final class NotificationService {
         } catch {
             print("Notification permission failed: \(error.localizedDescription)")
         }
+        await refreshStatus()
     }
+
+    func refreshStatus() async {
+        authorizationStatus = await center.notificationSettings().authorizationStatus
+        await refreshPendingReminders()
+    }
+
+    private var isAuthorized: Bool {
+        authorizationStatus == .authorized || authorizationStatus == .provisional
+    }
+
+    // MARK: - Deadline reminders
 
     func scheduleNotifications(for deadlines: [Deadline]) async {
         center.removeAllPendingNotificationRequests()
+        authorizationStatus = await center.notificationSettings().authorizationStatus
 
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized
-                || settings.authorizationStatus == .provisional else { return }
+        guard isAuthorized, remindersEnabled else {
+            await refreshPendingReminders()
+            return
+        }
 
         for deadline in deadlines where deadline.dueDate > .now {
+            let fireDate = reminderDate(for: deadline)
+
             let content = UNMutableNotificationContent()
             content.title = "\(deadline.title) is coming up"
-            content.body = body(for: deadline)
+            content.body = body(for: deadline, firingAt: fireDate)
             content.sound = .default
             content.userInfo = [
                 "deepLink": deepLink(for: deadline)
@@ -43,7 +86,7 @@ final class NotificationService {
 
             let components = Calendar.current.dateComponents(
                 [.year, .month, .day, .hour, .minute],
-                from: reminderDate(for: deadline)
+                from: fireDate
             )
 
             let trigger = UNCalendarNotificationTrigger(
@@ -63,21 +106,72 @@ final class NotificationService {
                 print("Could not schedule \(deadline.title): \(error.localizedDescription)")
             }
         }
+
+        await refreshPendingReminders()
     }
+
+    // Fires in 5 seconds so notifications and deep linking can be tested without waiting.
+    func sendTestNotification() async {
+        guard isAuthorized else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "StreamStudy test reminder"
+        content.body = "Tap to open your Calendar."
+        content.sound = .default
+        content.userInfo = ["deepLink": "streamstudy://calendar"]
+
+        let request = UNNotificationRequest(
+            identifier: "test-\(UUID().uuidString)",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        )
+
+        do {
+            try await center.add(request)
+        } catch {
+            print("Could not schedule test notification: \(error.localizedDescription)")
+        }
+    }
+
+    private func refreshPendingReminders() async {
+        let requests = await center.pendingNotificationRequests()
+
+        pendingReminders = requests
+            .filter { $0.identifier.hasPrefix("deadline-") }
+            .map { request in
+                PendingReminder(
+                    id: request.identifier,
+                    title: request.content.title,
+                    body: request.content.body,
+                    fireDate: (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate()
+                )
+            }
+            .sorted { ($0.fireDate ?? .distantFuture) < ($1.fireDate ?? .distantFuture) }
+    }
+
+    // MARK: - Helpers
 
     private func reminderDate(for deadline: Deadline) -> Date {
-        let oneDayBefore = deadline.dueDate.addingTimeInterval(-24 * 60 * 60)
-        return max(oneDayBefore, Date.now.addingTimeInterval(60))
+        // Remind `leadDays` before, but never schedule a notification in the past.
+        let leadTime = TimeInterval(leadDays * 24 * 60 * 60)
+        return max(deadline.dueDate.addingTimeInterval(-leadTime), Date.now.addingTimeInterval(60))
     }
 
-    private func body(for deadline: Deadline) -> String {
-        switch deadline.daysRemaining {
-        case 0:
+    private func body(for deadline: Deadline, firingAt fireDate: Date) -> String {
+        let calendar = Calendar.current
+        let daysLeft = calendar.dateComponents(
+            [.day],
+            from: calendar.startOfDay(for: fireDate),
+            to: calendar.startOfDay(for: deadline.dueDate)
+        ).day ?? 0
+
+        switch daysLeft {
+        case ...0:
             return "Your deadline is today. Open StreamStudy to continue learning."
         case 1:
             return "Your deadline is tomorrow. Open StreamStudy to see what to study next."
         default:
-            return "You have \(deadline.daysRemaining) days left. Open StreamStudy to keep making progress."
+            return "You have \(daysLeft) days left. Open StreamStudy to keep making progress."
         }
     }
 

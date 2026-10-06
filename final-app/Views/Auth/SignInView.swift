@@ -27,7 +27,7 @@ struct SignInView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
@@ -41,7 +41,7 @@ struct SignInView: View {
                             .foregroundStyle(.secondary)
                         Text(mode == .signIn ? "Welcome back" : "Start learning today")
                             .font(.spaceGrotesk(size: 28, weight: .bold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(.primary)
                     }
 
                     Picker("Mode", selection: $mode) {
@@ -92,8 +92,8 @@ struct SignInView: View {
                         Label("Continue with Apple", systemImage: "apple.logo")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(.white)
-                            .foregroundStyle(.black)
+                            .background(Color.primary)
+                            .foregroundStyle(Color.appBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
 
@@ -118,6 +118,9 @@ struct SignInView: View {
                         .padding(.top, 8)
                 }
                 .padding(24)
+                // Keeps the form a readable width in landscape and on iPad.
+                .frame(maxWidth: 500)
+                .frame(maxWidth: .infinity)
             }
         }
     }

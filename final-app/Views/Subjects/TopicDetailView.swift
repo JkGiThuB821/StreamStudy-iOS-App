@@ -21,7 +21,7 @@ struct TopicDetailView: View {
         List {
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack(alignment: .firstTextBaseline) {
+                    AdaptiveStack(verticalAlignment: .firstTextBaseline) {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("\(completedResourceCount) / \(topic.resources.count)")
                                 .font(.spaceGrotesk(size: 28, weight: .bold))
@@ -31,7 +31,7 @@ struct TopicDetailView: View {
                                 .foregroundStyle(.secondary)
                         }
 
-                        Spacer()
+                        Spacer(minLength: 0)
 
                         Text("\(Int(topic.progress * 100))%")
                             .font(.spaceGrotesk(size: 28, weight: .bold))
@@ -85,9 +85,9 @@ struct TopicDetailView: View {
                         Button("Cancel", role: .cancel) { isEditingTag = false }
                     }
                 } else {
-                    HStack {
+                    AdaptiveStack(spacing: 8) {
                         Text("Search tag")
-                        Spacer()
+                        Spacer(minLength: 0)
                         Text(ResourceDiscoveryService.tag(for: topic))
                             .foregroundStyle(.secondary)
                         Button("Edit") {
@@ -159,9 +159,6 @@ struct TopicDetailView: View {
         .sheet(isPresented: $showingAddResource) {
             AddResourceView(topic: topic)
         }
-        .onAppear {
-            print("TOPIC ID:", topic.id.uuidString)
-        }
     }
 
     private func runDiscovery() {
@@ -176,68 +173,87 @@ struct TopicDetailView: View {
         }
     }
     
+    // Completing a resource records its duration as study time, which feeds the
+    // "Study Activity" chart and "This week" total on the Progress tab.
+    // Un-completing it removes today's matching entry so time isn't double counted.
+    private func logStudyTime(for resource: LearningResource) {
+        if resource.isCompleted {
+            let entry = StudyProgress(minutesSpent: resource.durationMinutes)
+            entry.topic = topic
+            modelContext.insert(entry)
+        } else if let entry = topic.progressEntries
+            .filter({ Calendar.current.isDateInToday($0.date) && $0.minutesSpent == resource.durationMinutes })
+            .max(by: { $0.date < $1.date }) {
+            modelContext.delete(entry)
+        }
+    }
+
     private var completedResourceCount: Int {
         topic.resources.filter(\.isCompleted).count
     }
     
     private func resourceRow(_ resource: LearningResource) -> some View {
-        HStack(spacing: 12) {
-            
+        HStack(alignment: .top, spacing: 12) {
+
             // MARK: Resource icon
             Image(systemName: resource.type.sfSymbol)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.headline)
                 .foregroundStyle(
                     resource.isCompleted ? Color.secondary : .red
                 )
 
-            // MARK: Resource information
-            Button {
-                guard let url = URL(string: resource.urlString) else {
-                    return
-                }
-
-                UIApplication.shared.open(url)
-            } label: {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(resource.title)
-                        .font(.spaceGrotesk(size: 15, weight: .bold))
-                        .foregroundStyle(
-                            resource.isCompleted ? .secondary : .primary
-                        )
-                        .strikethrough(
-                            resource.isCompleted,
-                            color: .secondary
-                        )
-
-                    Text("\(resource.sourceName) Â· \(resource.durationMinutes) min")
-                        .font(.sgCaption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            // MARK: Completion action
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    resource.isCompleted.toggle()
-
-                    // A topic becomes complete when all its resources
-                    // have been completed.
-                    if !topic.resources.isEmpty {
-                        topic.isCompleted = topic.resources.allSatisfy(\.isCompleted)
+            // Info and the complete button sit side by side, or stack at large text sizes.
+            AdaptiveStack(spacing: 8) {
+                // MARK: Resource information
+                Button {
+                    guard let url = URL(string: resource.urlString) else {
+                        return
                     }
+
+                    UIApplication.shared.open(url)
+                } label: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(resource.title)
+                            .font(.spaceGrotesk(size: 15, weight: .bold))
+                            .foregroundStyle(
+                                resource.isCompleted ? .secondary : .primary
+                            )
+                            .strikethrough(
+                                resource.isCompleted,
+                                color: .secondary
+                            )
+
+                        Text("\(resource.sourceName) · \(resource.durationMinutes) min")
+                            .font(.sgCaption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
-            } label: {
-                Text(resource.isCompleted ? "Completed" : "Mark complete")
-                    .font(.sgCaption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(
-                        resource.isCompleted ? .secondary : Color.red
-                    )
+                .buttonStyle(.plain)
+
+                // MARK: Completion action
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        resource.isCompleted.toggle()
+                        logStudyTime(for: resource)
+
+                        // A topic becomes complete when all its resources
+                        // have been completed.
+                        if !topic.resources.isEmpty {
+                            topic.isCompleted = topic.resources.allSatisfy(\.isCompleted)
+                        }
+                    }
+                } label: {
+                    Text(resource.isCompleted ? "Completed" : "Mark complete")
+                        .font(.sgCaption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(
+                            resource.isCompleted ? .secondary : Color.red
+                        )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .padding(.vertical, 6)
     }

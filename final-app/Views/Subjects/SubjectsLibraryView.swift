@@ -24,7 +24,13 @@ struct SubjectsLibraryView: View {
         return Int(avg * 100)
     }
 
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    @ScaledMetric(relativeTo: .subheadline) private var cardMinWidth: CGFloat = 150
+    @ScaledMetric(relativeTo: .subheadline) private var cardHeight: CGFloat = 110
+
+    // Adaptive columns: 2 in portrait, more in landscape / iPad, fewer at huge text sizes.
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: cardMinWidth), spacing: 12)]
+    }
 
     var body: some View {
         ScrollView {
@@ -44,23 +50,23 @@ struct SubjectsLibraryView: View {
                             .font(.sgTitle)
                         Text("Add Subject").font(.sgCaption)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 110)
-                    .background(.white.opacity(0.06))
-                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: cardHeight)
+                    .background(Color.cardFill)
+                    .foregroundStyle(.primary)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
             .padding(.horizontal)
         }
         .searchable(text: $searchText, prompt: "Search subjects...")
-        .background(Color.black)
+        .background(Color.appBackground)
         .navigationTitle("Subjects Library")
         .navigationDestination(for: Subject.self) { SubjectDetailView(subject: $0) }
         .sheet(isPresented: $showingAddSubject) { AddSubjectView() }
     }
 
     private var statsHeader: some View {
-        HStack {
+        AdaptiveStack(horizontalAlignment: .center) {
             statBlock(value: "\(subjects.count)", label: "Subjects")
             statBlock(value: "\(subjects.filter { $0.progress > 0 && $0.progress < 1 }.count)", label: "In Progress")
             statBlock(value: "\(averageProgress)%", label: "Avg Progress")
@@ -90,13 +96,13 @@ struct SubjectsLibraryView: View {
                 .lineLimit(2)
             Text(subject.subjectDescription)
                 .font(.sgCaption2)
-                .foregroundStyle(.white.opacity(0.7))
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
         }
         .padding(10)
-        .frame(height: 110, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: cardHeight, alignment: .leading)
         .background(Color(hex: subject.colorHex).opacity(0.55))
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
