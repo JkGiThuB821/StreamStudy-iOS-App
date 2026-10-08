@@ -37,6 +37,9 @@ enum GeminiService {
 
     private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models"
 
+    // Swapped for a stubbed session in unit tests.
+    static var session: URLSession = .shared
+
     static var isConfigured: Bool {
         APIKeys.geminiAPIKey != nil
     }
@@ -72,7 +75,7 @@ enum GeminiService {
         }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw GeminiServiceError.invalidResponse }
 
         guard (200...299).contains(http.statusCode) else {

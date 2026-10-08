@@ -7,6 +7,9 @@
 
 import Foundation
 
+// Turns a topic's videos, articles and docs into an ordered, step-by-step
+// lesson plan. Gemini designs the plan as JSON when a key is configured;
+// otherwise (or if the call fails) a rule-based plan is built on-device.
 enum LessonPlanService {
 
     static func generatePlan(for topic: Topic) async -> (plan: LessonPlan, warning: String?) {
@@ -35,7 +38,8 @@ enum LessonPlanService {
 
     // MARK: - Gemini
 
-    private struct AILessonPlan: Decodable {
+    // Internal (not private) so unit tests can check the validation in convert().
+    struct AILessonPlan: Decodable {
         let summary: String
         let steps: [Step]
 
@@ -118,7 +122,7 @@ enum LessonPlanService {
 
     // Validates the model's JSON: drops unknown/duplicate indexes and empty
     // steps, and recalculates times for steps that have resources.
-    private static func convert(_ ai: AILessonPlan, resources: [LearningResource]) -> LessonPlan {
+    static func convert(_ ai: AILessonPlan, resources: [LearningResource]) -> LessonPlan {
         var used = Set<Int>()
 
         let steps: [LessonStep] = ai.steps.compactMap { step -> LessonStep? in

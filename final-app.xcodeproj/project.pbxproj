@@ -13,14 +13,25 @@
 		E7D39573306BA60F000136F2 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = E7D39571306BA5FF000136F2 /* .gitignore */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		E7FA798D3077721D007DD478 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E74DC11B305BC2CE00DF9FDE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E74DC122305BC2CE00DF9FDE;
+			remoteInfo = "final-app";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		E74DC123305BC2CE00DF9FDE /* final-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "final-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E7D39571306BA5FF000136F2 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		E7FA79893077721D007DD478 /* final-appTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "final-appTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E7EFAE84306E20CB004F9FAA /* Exceptions for "final-app" folder in "final-app" target */ = {
+		E7FA7ABC30777C1D007DD478 /* Exceptions for "final-app" folder in "final-app" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Config/Secrets.xcconfig,
@@ -30,24 +41,18 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		E749C4D73074E27000266CE3 /* Exceptions for "final-app" folder in "Compile Sources" phase from "final-app" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = E74DC11F305BC2CE00DF9FDE /* Sources */;
-			membershipExceptions = (
-				Config/Secrets.xcconfig,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E74DC125305BC2CE00DF9FDE /* final-app */ = {
+		E7FA7A7B30777B10007DD478 /* final-app */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E7EFAE84306E20CB004F9FAA /* Exceptions for "final-app" folder in "final-app" target */,
-				E749C4D73074E27000266CE3 /* Exceptions for "final-app" folder in "Compile Sources" phase from "final-app" target */,
+				E7FA7ABC30777C1D007DD478 /* Exceptions for "final-app" folder in "final-app" target */,
 			);
 			path = "final-app";
+			sourceTree = "<group>";
+		};
+		E7FA7AB530777B25007DD478 /* final-appTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "final-appTests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -62,17 +67,25 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E7FA79863077721D007DD478 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		E74DC11A305BC2CE00DF9FDE = {
 			isa = PBXGroup;
 			children = (
-				E74DC125305BC2CE00DF9FDE /* final-app */,
 				E74DC124305BC2CE00DF9FDE /* Products */,
 				E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */,
 				E76F30AA3069705E00AD3F58 /* Frameworks */,
 				E7D39571306BA5FF000136F2 /* .gitignore */,
+				E7FA7A7B30777B10007DD478 /* final-app */,
+				E7FA7AB530777B25007DD478 /* final-appTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -80,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				E74DC123305BC2CE00DF9FDE /* final-app.app */,
+				E7FA79893077721D007DD478 /* final-appTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -107,7 +121,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E74DC125305BC2CE00DF9FDE /* final-app */,
+				E7FA7A7B30777B10007DD478 /* final-app */,
 			);
 			name = "final-app";
 			packageProductDependencies = (
@@ -117,6 +131,29 @@
 			productName = "final-app";
 			productReference = E74DC123305BC2CE00DF9FDE /* final-app.app */;
 			productType = "com.apple.product-type.application";
+		};
+		E7FA79883077721D007DD478 /* final-appTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7FA798F3077721D007DD478 /* Build configuration list for PBXNativeTarget "final-appTests" */;
+			buildPhases = (
+				E7FA79853077721D007DD478 /* Sources */,
+				E7FA79863077721D007DD478 /* Frameworks */,
+				E7FA79873077721D007DD478 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E7FA798E3077721D007DD478 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E7FA7AB530777B25007DD478 /* final-appTests */,
+			);
+			name = "final-appTests";
+			packageProductDependencies = (
+			);
+			productName = "final-appTests";
+			productReference = E7FA79893077721D007DD478 /* final-appTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -130,6 +167,10 @@
 				TargetAttributes = {
 					E74DC122305BC2CE00DF9FDE = {
 						CreatedOnToolsVersion = 26.5;
+					};
+					E7FA79883077721D007DD478 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = E74DC122305BC2CE00DF9FDE;
 					};
 				};
 			};
@@ -151,6 +192,7 @@
 			projectRoot = "";
 			targets = (
 				E74DC122305BC2CE00DF9FDE /* final-app */,
+				E7FA79883077721D007DD478 /* final-appTests */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +207,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E7FA79873077721D007DD478 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -175,13 +224,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E7FA79853077721D007DD478 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E7FA798E3077721D007DD478 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E74DC122305BC2CE00DF9FDE /* final-app */;
+			targetProxy = E7FA798D3077721D007DD478 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		E74DC12C305BC2D000DF9FDE /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E74DC125305BC2CE00DF9FDE /* final-app */;
-			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -245,8 +307,6 @@
 		};
 		E74DC12D305BC2D000DF9FDE /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E74DC125305BC2CE00DF9FDE /* final-app */;
-			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -303,7 +363,7 @@
 		};
 		E74DC12F305BC2D000DF9FDE /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E74DC125305BC2CE00DF9FDE /* final-app */;
+			baseConfigurationReferenceAnchor = E7FA7A7B30777B10007DD478 /* final-app */;
 			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -339,7 +399,7 @@
 		};
 		E74DC130305BC2D000DF9FDE /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = E74DC125305BC2CE00DF9FDE /* final-app */;
+			baseConfigurationReferenceAnchor = E7FA7A7B30777B10007DD478 /* final-app */;
 			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -373,6 +433,46 @@
 			};
 			name = Release;
 		};
+		E7FA79903077721D007DD478 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "edu.monash.final-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/final-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/final-app";
+			};
+			name = Debug;
+		};
+		E7FA79913077721D007DD478 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "edu.monash.final-appTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/final-app.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/final-app";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -390,6 +490,15 @@
 			buildConfigurations = (
 				E74DC12F305BC2D000DF9FDE /* Debug */,
 				E74DC130305BC2D000DF9FDE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E7FA798F3077721D007DD478 /* Build configuration list for PBXNativeTarget "final-appTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7FA79903077721D007DD478 /* Debug */,
+				E7FA79913077721D007DD478 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

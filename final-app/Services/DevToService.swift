@@ -31,6 +31,9 @@ enum DevToServiceError: LocalizedError {
 }
 
 enum DevToService {
+    // Swapped for a stubbed session in unit tests.
+    static var session: URLSession = .shared
+
     // `topDays` returns the most popular articles from the last N days instead of
     // just the newest ones, which gives a better pool to filter for relevance.
     static func fetchArticles(tag: String, maxResults: Int = 5, topDays: Int? = nil) async throws -> [DevToArticleResult] {
@@ -43,7 +46,7 @@ enum DevToService {
             components.queryItems?.append(URLQueryItem(name: "top", value: String(topDays)))
         }
 
-        let (data, response) = try await URLSession.shared.data(from: components.url!)
+        let (data, response) = try await session.data(from: components.url!)
         guard let http = response as? HTTPURLResponse else { throw DevToServiceError.invalidResponse }
         guard (200...299).contains(http.statusCode) else { throw DevToServiceError.httpError(http.statusCode) }
 

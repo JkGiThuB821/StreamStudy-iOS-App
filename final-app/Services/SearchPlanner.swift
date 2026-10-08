@@ -62,16 +62,30 @@ enum SearchPlanner {
         titleWords.forEach { frequency[$0, default: 0] += 2 }
         descriptionWords.forEach { frequency[$0, default: 0] += 1 }
 
+        // Ties go to longer words, which tend to be the technical terms.
         let keywords = frequency
-            .sorted { $0.value == $1.value ? $0.key < $1.key : $0.value > $1.value }
+            .sorted { lhs, rhs in
+                if lhs.value != rhs.value { return lhs.value > rhs.value }
+                if lhs.key.count != rhs.key.count { return lhs.key.count > rhs.key.count }
+                return lhs.key < rhs.key
+            }
             .prefix(8)
             .map(\.key)
 
-        // Title + the most useful description terms + subject context.
+        // Title + the most specific description terms + subject context.
+        // (Picking the *first* three words gave queries like "model one many";
+        // the longest ones not already in the title are far more specific.)
         let extraDetail: [String] = Array(
             descriptionWords
-                .filter { !titleWords.contains($0) }
+                .filter { word in !titleWords.contains { sharesStem(word, $0) } }
                 .uniqued()
+                .enumerated()
+                .sorted { lhs, rhs in
+                    lhs.element.count == rhs.element.count
+                        ? lhs.offset < rhs.offset
+                        : lhs.element.count > rhs.element.count
+                }
+                .map { $0.element }
                 .prefix(3)
         )
         let subjectContext: [String] = Array(
@@ -83,10 +97,13 @@ enum SearchPlanner {
         let youtubeQuery = queryParts.joined(separator: " ")
 
         let tag = ResourceDiscoveryService.tag(for: topic)
-        let candidateTags = ([tag] + keywords + subjectWords)
-            .map(normalisedTag)
-            .filter { !$0.isEmpty }
-            .uniqued()
+        var candidateTags: [String] = []
+        for candidate in ([tag] + keywords + subjectWords).map(normalisedTag) where !candidate.isEmpty {
+            // Skip near-duplicates like "relationship" after "relationships".
+            if !candidateTags.contains(where: { sharesStem($0, candidate) }) {
+                candidateTags.append(candidate)
+            }
+        }
 
         return SearchPlan(
             youtubeQuery: youtubeQuery,
@@ -105,7 +122,14 @@ enum SearchPlanner {
         "some", "such", "than", "then", "them", "they", "which", "who", "week", "lecture",
         "lab", "tutorial", "assignment", "assessment", "topic", "unit", "intro", "introduction",
         "basics", "part", "via", "each", "between", "make", "build", "building", "create",
+        "one", "two", "three", "many", "much", "very", "just", "like", "get", "new", "way",
     ]
+
+    // "relationship" / "relationships", "query" / "querying" count as the same term.
+    nonisolated static func sharesStem(_ a: String, _ b: String) -> Bool {
+        guard min(a.count, b.count) >= 4 else { return a == b }
+        return a.hasPrefix(b) || b.hasPrefix(a)
+    }
 
     nonisolated static func significantWords(in text: String) -> [String] {
         text.lowercased()

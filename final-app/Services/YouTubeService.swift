@@ -36,6 +36,9 @@ enum YouTubeServiceError: LocalizedError {
 enum YouTubeService {
     private static let baseURL = "https://www.googleapis.com/youtube/v3"
 
+    // Swapped for a stubbed session in unit tests.
+    static var session: URLSession = .shared
+
     static func searchVideos(query: String, maxResults: Int = 5) async throws -> [YouTubeVideoResult] {
         guard let key = APIKeys.youTubeDataAPIKey, !key.isEmpty else {
             throw YouTubeServiceError.missingAPIKey
@@ -110,7 +113,7 @@ enum YouTubeService {
         if let bundleID = Bundle.main.bundleIdentifier {
             request.setValue(bundleID, forHTTPHeaderField: "X-Ios-Bundle-Identifier")
         }
-        return try await URLSession.shared.data(for: request)
+        return try await session.data(for: request)
     }
 
     private static func validate(_ response: URLResponse, data: Data) throws {
@@ -130,7 +133,7 @@ enum YouTubeService {
             .reduce(text) { $0.replacingOccurrences(of: $1.0, with: $1.1) }
     }
 
-    private static func minutes(fromISO8601Duration duration: String) -> Int {
+    static func minutes(fromISO8601Duration duration: String) -> Int {
         var hours = 0, minutes = 0, seconds = 0
         var numberBuffer = ""
         var isTimeSection = false
