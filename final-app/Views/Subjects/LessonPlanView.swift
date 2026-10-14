@@ -309,7 +309,9 @@ struct LessonPlanView: View {
     @ViewBuilder
     private func extraResources(_ plan: LessonPlan) -> some View {
         let planned = Set(plan.steps.flatMap(\.resourceIDs))
-        let extras = topic.resources.filter { !planned.contains($0.id) }
+        let extras = topic.resources
+            .filter { !planned.contains($0.id) }
+            .sorted { ($0.addedAt, $0.title) < ($1.addedAt, $1.title) }   // stable order
 
         if !extras.isEmpty {
             DisclosureGroup {

@@ -25,7 +25,7 @@ struct SubjectsLibraryView: View {
     }
 
     @ScaledMetric(relativeTo: .subheadline) private var cardMinWidth: CGFloat = 150
-    @ScaledMetric(relativeTo: .subheadline) private var cardHeight: CGFloat = 110
+    @ScaledMetric(relativeTo: .subheadline) private var cardHeight: CGFloat = 190
 
     // Adaptive columns: 2 in portrait, more in landscape / iPad, fewer at huge text sizes.
     private var columns: [GridItem] {
@@ -83,26 +83,71 @@ struct SubjectsLibraryView: View {
     }
 
     private func subjectCard(_ subject: Subject) -> some View {
-        VStack(alignment: .leading) {
+        let resources = subject.topics.flatMap(\.resources)
+        let minutesLeft = resources.filter { !$0.isCompleted }.reduce(0) { $0 + $1.durationMinutes }
+        let nextDeadline = subject.deadlines
+            .filter { !$0.isOverdue }
+            .min { $0.dueDate < $1.dueDate }
+        let topicWord = subject.topics.count == 1 ? "topic" : "topics"
+        let episodeWord = resources.count == 1 ? "episode" : "episodes"
+        let contentSummary = "\(subject.topics.count) \(topicWord) Â· \(resources.count) \(episodeWord)"
+        let deadlineIsClose = (nextDeadline?.daysRemaining ?? .max) <= 3
+
+        return VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: subject.iconName)
+                    .font(.title3)
                 Spacer()
                 Text("\(Int(subject.progress * 100))%")
-                    .font(.spaceGrotesk(size: 11, weight: .bold))
+                    .font(.spaceGrotesk(size: 12, weight: .bold))
             }
-            Spacer()
+
             Text(subject.name)
                 .font(.spaceGrotesk(size: 15, weight: .bold))
                 .lineLimit(2)
-            Text(subject.subjectDescription)
-                .font(.sgCaption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+
+            if !subject.subjectDescription.isEmpty {
+                Text(subject.subjectDescription)
+                    .font(.sgCaption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer(minLength: 2)
+
+            cardDetail(contentSummary, systemImage: "rectangle.stack")
+
+            if minutesLeft > 0 {
+                cardDetail("\(minutesLeft) min left to watch", systemImage: "clock")
+            }
+
+            cardDetail(deadlineText(nextDeadline), systemImage: "calendar")
+                .fontWeight(deadlineIsClose ? .bold : .regular)
+
+            ProgressView(value: subject.progress)
+                .tint(.primary)
+                .accessibilityLabel("Progress")
+                .accessibilityValue("\(Int(subject.progress * 100)) percent")
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: cardHeight, alignment: .leading)
+        .padding(12)
+        .frame(maxWidth: .infinity, minHeight: cardHeight, alignment: .topLeading)
         .background(Color(hex: subject.colorHex).opacity(0.55))
         .foregroundStyle(.primary)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func cardDetail(_ text: String, systemImage: String) -> some View {
+        Label(text, systemImage: systemImage)
+            .font(.sgCaption2)
+            .lineLimit(2)
+    }
+
+    private func deadlineText(_ deadline: Deadline?) -> String {
+        guard let deadline else { return "No upcoming deadlines" }
+        switch deadline.daysRemaining {
+        case ...0: return "\(deadline.title) due today"
+        case 1: return "\(deadline.title) due tomorrow"
+        default: return "\(deadline.title) in \(deadline.daysRemaining) days"
+        }
     }
 }

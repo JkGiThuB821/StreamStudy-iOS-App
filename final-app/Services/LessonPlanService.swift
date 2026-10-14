@@ -15,7 +15,7 @@ enum LessonPlanService {
     static func generatePlan(for topic: Topic) async -> (plan: LessonPlan, warning: String?) {
         let resources = orderedResources(for: topic)
 
-        guard GeminiService.isConfigured, !resources.isEmpty else {
+        guard GeminiService.isAvailable, !resources.isEmpty else {
             return (localPlan(for: topic, resources: resources), nil)
         }
 

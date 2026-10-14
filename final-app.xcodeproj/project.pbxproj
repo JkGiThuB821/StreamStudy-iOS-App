@@ -34,7 +34,6 @@
 		E7FA7ABC30777C1D007DD478 /* Exceptions for "final-app" folder in "final-app" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Config/Secrets.xcconfig,
 				Info.plist,
 			);
 			target = E74DC122305BC2CE00DF9FDE /* final-app */;

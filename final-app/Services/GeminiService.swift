@@ -44,6 +44,11 @@ enum GeminiService {
         APIKeys.geminiAPIKey != nil
     }
 
+    // Configured AND online. Callers fall back to on-device logic otherwise.
+    static var isAvailable: Bool {
+        isConfigured && NetworkMonitor.shared.isConnected
+    }
+
     static func generateJSON<T: Decodable>(
         _ type: T.Type,
         prompt: String,
