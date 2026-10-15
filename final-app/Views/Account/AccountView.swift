@@ -16,9 +16,12 @@ struct AccountView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openURL) private var openURL
     @ObservedObject private var notifications = NotificationService.shared
+    @ObservedObject private var network = NetworkMonitor.shared
 
     @State private var tab: Tab = .profile
     @State private var testSent = false
+    @State private var nameDraft = ""
+    @AppStorage(UserPreferences.onboardedUserIDsKey) private var onboardedUserIDs = ""
     @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 44
 
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
@@ -51,6 +54,9 @@ struct AccountView: View {
         .task {
             await notifications.refreshStatus()
         }
+        .onAppear {
+            nameDraft = authManager.displayName ?? ""
+        }
     }
 
     // MARK: - Profile
@@ -61,9 +67,31 @@ struct AccountView: View {
                 Circle().fill(.red).frame(width: avatarSize, height: avatarSize)
                     .overlay(Text(initial).font(.sgHeadline).foregroundStyle(.white))
                 VStack(alignment: .leading) {
-                    Text(authManager.userEmail ?? "Account").font(.sgHeadline)
-                    Text("Signed in").font(.sgCaption).foregroundStyle(.secondary)
+                    Text(authManager.displayName ?? authManager.userEmail ?? "Account").font(.sgHeadline)
+                    Text(authManager.userEmail ?? "Signed in").font(.sgCaption).foregroundStyle(.secondary)
                 }
+            }
+
+            connectionRow
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("DISPLAY NAME").font(.sgCaption).foregroundStyle(.secondary)
+                HStack {
+                    TextField("Display name", text: $nameDraft)
+                        .textContentType(.name)
+                        .textInputAutocapitalization(.words)
+                    Button("Save") {
+                        Task { await authManager.updateDisplayName(nameDraft) }
+                    }
+                    .font(.spaceGrotesk(size: 14, weight: .bold))
+                    .disabled(
+                        nameDraft.trimmingCharacters(in: .whitespaces).isEmpty
+                            || nameDraft == authManager.displayName
+                    )
+                }
+                .padding(12)
+                .background(Color.cardFill)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
 
             Button("Start Revision Mode") {}
@@ -87,12 +115,28 @@ struct AccountView: View {
 
             syncRow
 
+            Button {
+                guard let uid = authManager.uid else { return }
+                onboardedUserIDs = UserPreferences.removing(uid, from: onboardedUserIDs)
+            } label: {
+                Label("Show Onboarding Again", systemImage: "sparkles")
+            }
+
             Button("Sign Out", role: .destructive) {
                 authManager.signOut()
             }
             .padding(.top, 20)
         }
         .padding(.horizontal)
+    }
+
+    private var connectionRow: some View {
+        Label(
+            network.isConnected ? "Online" : "Offline: changes are saved on this device and sync when you reconnect",
+            systemImage: network.isConnected ? "wifi" : "wifi.slash"
+        )
+        .font(.spaceGrotesk(size: 13, weight: .semibold))
+        .foregroundStyle(network.isConnected ? Color.green : Color.orange)
     }
 
     private var syncRow: some View {
@@ -108,6 +152,7 @@ struct AccountView: View {
                         Task { await syncService.syncNow(uid: uid, modelContext: modelContext) }
                     }
                     .font(.spaceGrotesk(size: 12, weight: .bold))
+                    .disabled(!network.isConnected)
                 }
             }
 

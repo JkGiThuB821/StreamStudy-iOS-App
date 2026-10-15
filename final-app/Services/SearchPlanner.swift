@@ -25,7 +25,7 @@ enum SearchPlanner {
     // falls back to on-device keyword extraction.
     static func plan(for topic: Topic) async -> (plan: SearchPlan, warning: String?) {
         let local = localPlan(for: topic)
-        guard GeminiService.isConfigured else { return (local, nil) }
+        guard GeminiService.isAvailable else { return (local, nil) }
 
         do {
             let ai = try await GeminiService.generateJSON(

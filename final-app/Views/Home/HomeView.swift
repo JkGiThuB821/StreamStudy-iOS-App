@@ -10,6 +10,7 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.openURL) private var openURL
+    @EnvironmentObject private var authManager: AuthManager
     @Query(sort: \Deadline.dueDate) private var deadlines: [Deadline]
     @Query private var subjects: [Subject]
 
@@ -45,9 +46,24 @@ struct HomeView: View {
         deadlines.filter { !$0.isOverdue }
     }
 
+    private var greeting: String {
+        guard let name = authManager.displayName, !name.isEmpty else { return "Welcome back" }
+        let firstName = name.split(separator: " ").first.map(String.init) ?? name
+        return "Hi, \(firstName)"
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(greeting)
+                        .font(.spaceGrotesk(size: 22, weight: .bold))
+                    Text("Here's what to study next.")
+                        .font(.sgSubheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+
                 if let topPick = ranked.first {
                     nextWatchCard(for: topPick)
                 }

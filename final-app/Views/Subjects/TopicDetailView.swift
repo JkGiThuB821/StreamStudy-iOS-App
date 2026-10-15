@@ -10,6 +10,7 @@ import SwiftData
 
 struct TopicDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @ObservedObject private var network = NetworkMonitor.shared
     @Bindable var topic: Topic
     @State private var showingAddResource = false
     @State private var phase: Phase = .idle
@@ -29,6 +30,12 @@ struct TopicDetailView: View {
     }
 
     private var isBusy: Bool { phase != .idle }
+
+    // SwiftData doesn't keep a relationship's order, so the list could jump around
+    // when a resource changed (e.g. Mark complete). A fixed sort keeps rows in place.
+    private var sortedResources: [LearningResource] {
+        topic.resources.sorted { ($0.addedAt, $0.title) < ($1.addedAt, $1.title) }
+    }
     @State private var isEditingTag = false
     @State private var tagDraft = ""
 
@@ -145,7 +152,13 @@ struct TopicDetailView: View {
                         }
                     }
                 }
-                .disabled(isBusy)
+                .disabled(isBusy || !network.isConnected)
+
+                if !network.isConnected {
+                    Label("You're offline. Your saved resources and lesson plan still work; finding new resources needs the internet.", systemImage: "wifi.slash")
+                        .font(.sgCaption)
+                        .foregroundStyle(.orange)
+                }
 
                 if let discoverySummary {
                     Text(discoverySummary)
@@ -171,7 +184,7 @@ struct TopicDetailView: View {
             }
 
             Section("Episodes") {
-                ForEach(topic.resources) { resource in
+                ForEach(sortedResources) { resource in
                     resourceRow(resource)
                 }
 

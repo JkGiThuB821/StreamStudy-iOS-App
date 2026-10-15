@@ -14,6 +14,7 @@ final class AuthManager: ObservableObject {
     @Published var isSignedIn: Bool = false
     @Published var userEmail: String?
     @Published var uid: String?
+    @Published var displayName: String?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
@@ -25,6 +26,10 @@ final class AuthManager: ObservableObject {
             self.isSignedIn = user != nil
             self.userEmail = user?.email
             self.uid = user?.uid
+            // Prefer the name saved on this device (works offline), then the account's.
+            self.displayName = user.flatMap {
+                UserDefaults.standard.string(forKey: UserPreferences.displayNameKey(for: $0.uid)) ?? $0.displayName
+            }
         }
     }
 
@@ -55,9 +60,27 @@ final class AuthManager: ObservableObject {
             let changeRequest = result.user.createProfileChangeRequest()
             changeRequest.displayName = fullName
             try await changeRequest.commitChanges()
+            saveDisplayNameLocally(fullName, uid: result.user.uid)
         } catch {
             errorMessage = friendlyMessage(for: error)
         }
+    }
+
+    // Saves the name on the device straight away, then updates the Firebase
+    // profile. If that fails (e.g. offline) the local name is still used.
+    func updateDisplayName(_ name: String) async {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let user = Auth.auth().currentUser, !trimmed.isEmpty else { return }
+        saveDisplayNameLocally(trimmed, uid: user.uid)
+
+        let changeRequest = user.createProfileChangeRequest()
+        changeRequest.displayName = trimmed
+        try? await changeRequest.commitChanges()
+    }
+
+    private func saveDisplayNameLocally(_ name: String, uid: String) {
+        UserDefaults.standard.set(name, forKey: UserPreferences.displayNameKey(for: uid))
+        displayName = name
     }
 
     func signOut() {
