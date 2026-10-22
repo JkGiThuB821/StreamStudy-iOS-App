@@ -17,6 +17,8 @@ final class NotificationService: ObservableObject {
     // UserDefaults keys shared with @AppStorage in AccountView / MainTabView.
     static let remindersEnabledKey = "deadlineRemindersEnabled"
     static let reminderLeadDaysKey = "deadlineReminderLeadDays"
+    static let weeklyDigestEnabledKey = "weeklyDigestEnabled"
+    static let weeklyDigestIdentifier = "weekly-digest"
 
     struct PendingReminder: Identifiable {
         let id: String
@@ -65,7 +67,11 @@ final class NotificationService: ObservableObject {
     // MARK: - Deadline reminders
 
     func scheduleNotifications(for deadlines: [Deadline]) async {
-        center.removeAllPendingNotificationRequests()
+        // Only replace deadline reminders, so the weekly digest notification survives.
+        let deadlineIDs = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix("deadline-") }
+        center.removePendingNotificationRequests(withIdentifiers: deadlineIDs)
         authorizationStatus = await center.notificationSettings().authorizationStatus
 
         guard isAuthorized, remindersEnabled else {
@@ -110,15 +116,49 @@ final class NotificationService: ObservableObject {
         await refreshPendingReminders()
     }
 
+    // MARK: - Weekly digest (Season Pass)
+
+    // A repeating Monday 9am "episode drop" notification that opens the digest.
+    func scheduleWeeklyDigest() async {
+        center.removePendingNotificationRequests(withIdentifiers: [Self.weeklyDigestIdentifier])
+        authorizationStatus = await center.notificationSettings().authorizationStatus
+
+        let enabled = defaults.object(forKey: Self.weeklyDigestEnabledKey) as? Bool ?? true
+        guard isAuthorized, enabled else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "This week's episodes have dropped"
+        content.body = "Your study picks for the week are ready. Swipe to rate what you've learned."
+        content.sound = .default
+        content.userInfo = ["deepLink": "streamstudy://digest"]
+
+        var monday9am = DateComponents()
+        monday9am.weekday = 2
+        monday9am.hour = 9
+        monday9am.minute = 0
+
+        let request = UNNotificationRequest(
+            identifier: Self.weeklyDigestIdentifier,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: monday9am, repeats: true)
+        )
+
+        do {
+            try await center.add(request)
+        } catch {
+            print("Could not schedule weekly digest: \(error.localizedDescription)")
+        }
+    }
+
     // Fires in 5 seconds so notifications and deep linking can be tested without waiting.
-    func sendTestNotification() async {
+    func sendTestNotification(opensDigest: Bool = false) async {
         guard isAuthorized else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "StreamStudy test reminder"
-        content.body = "Tap to open your Calendar."
+        content.title = opensDigest ? "This week's episodes have dropped" : "StreamStudy test reminder"
+        content.body = opensDigest ? "Tap to open your weekly digest." : "Tap to open your Calendar."
         content.sound = .default
-        content.userInfo = ["deepLink": "streamstudy://calendar"]
+        content.userInfo = ["deepLink": opensDigest ? "streamstudy://digest" : "streamstudy://calendar"]
 
         let request = UNNotificationRequest(
             identifier: "test-\(UUID().uuidString)",

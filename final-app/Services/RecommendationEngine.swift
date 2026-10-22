@@ -30,12 +30,9 @@ enum RecommendationEngine {
                 TopicRecommendation(
                     topic: topic,
                     score: score(for: topic, weights: weights),
-                    // Follow the lesson plan's order when there is one,
-                    // otherwise start with the shortest unfinished resource.
-                    nextResource: topic.nextPlannedResource ?? topic.resources
-                        .filter { !$0.isCompleted }
-                        .sorted { $0.durationMinutes < $1.durationMinutes }
-                        .first
+                    // Lesson plan order first, then the most relevant (AI-tagged)
+                    // episode, then the shortest. See SignalPipeline.bestEpisode.
+                    nextResource: SignalPipeline.bestEpisode(for: topic)
                 )
             }
             .sorted { $0.score > $1.score }
@@ -49,19 +46,15 @@ enum RecommendationEngine {
         let deadline = deadlineProximityScore(for: topic)
         // Less complete = more urgent to pick up.
         let progress = 1 - topic.progress
-        let difficulty: Double
-        switch topic.difficulty {
-        case .needsRevision: difficulty = 1.0
-        case .notRated: difficulty = 0.5
-        case .understood: difficulty = 0.0
-        }
+        // Swipe-to-Revise history when there is one, otherwise the stored rating.
+        let difficulty = SignalPipeline.difficultySignal(for: topic)
 
         return weights.deadlineProximity * deadline
             + weights.progress * progress
             + weights.difficulty * difficulty
     }
 
-    private static func deadlineProximityScore(for topic: Topic) -> Double {
+    static func deadlineProximityScore(for topic: Topic) -> Double {
         guard let subject = topic.subject else { return 0 }
 
         let gracePeriodStart = Calendar.current.date(byAdding: .day, value: -1, to: .now) ?? .distantPast

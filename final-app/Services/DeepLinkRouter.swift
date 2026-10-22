@@ -15,6 +15,7 @@ final class DeepLinkRouter: ObservableObject {
     enum Destination: Equatable {
         case topic(UUID)
         case calendar(UUID?)
+        case digest
     }
 
     @Published var destination: Destination?
@@ -32,6 +33,8 @@ final class DeepLinkRouter: ObservableObject {
         case "calendar":
             let id = components.first.flatMap(UUID.init(uuidString:))
             destination = .calendar(id)
+        case "digest":
+            destination = .digest
         default:
             break
         }

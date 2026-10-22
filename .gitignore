@@ -1,5 +1,5 @@
 # API keys
-final-app/Config/Secrets.xcconfig
+final-app/Config/Secrets.*
 GoogleService-Info.plist
 
 # Standard ignores

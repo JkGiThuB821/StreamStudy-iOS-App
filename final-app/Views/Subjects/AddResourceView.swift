@@ -68,6 +68,10 @@ struct AddResourceView: View {
         )
         resource.topic = topic
         modelContext.insert(resource)
+
+        // Tag the new resource in the background (AI, or metadata if offline).
+        let topic = topic
+        Task { await ResourceTaggingService.tagUntaggedResources(in: topic) }
         dismiss()
     }
 }

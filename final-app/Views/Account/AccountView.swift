@@ -26,6 +26,7 @@ struct AccountView: View {
 
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
     @AppStorage(NotificationService.remindersEnabledKey) private var remindersEnabled = true
+    @AppStorage(NotificationService.weeklyDigestEnabledKey) private var weeklyDigestEnabled = true
     @AppStorage(NotificationService.reminderLeadDaysKey) private var reminderLeadDays = 1
 
     enum Tab { case profile, notifications }
@@ -201,20 +202,35 @@ struct AccountView: View {
                 .disabled(!isAuthorized || !remindersEnabled)
                 .opacity(isAuthorized && remindersEnabled ? 1 : 0.5)
 
-                Button {
-                    Task {
-                        await notifications.sendTestNotification()
-                        testSent = true
+                Toggle("Weekly episode drop (Mondays, 9am)", isOn: $weeklyDigestEnabled)
+                    .tint(.red)
+                    .disabled(!isAuthorized)
+
+                AdaptiveStack(spacing: 10) {
+                    Button {
+                        Task {
+                            await notifications.sendTestNotification()
+                            testSent = true
+                        }
+                    } label: {
+                        Label("Test Reminder", systemImage: "bell.badge")
                     }
-                } label: {
-                    Label("Send Test Notification", systemImage: "bell.badge")
+
+                    Button {
+                        Task {
+                            await notifications.sendTestNotification(opensDigest: true)
+                            testSent = true
+                        }
+                    } label: {
+                        Label("Test Weekly Drop", systemImage: "sparkles.tv")
+                    }
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
                 .disabled(!isAuthorized)
 
                 if testSent {
-                    Text("A test reminder will appear in about 5 seconds. Tap it to jump to the Calendar.")
+                    Text("A test notification will appear in about 5 seconds. Tap it to open the Calendar (reminder) or this week's digest (weekly drop).")
                         .font(.sgCaption2)
                         .foregroundStyle(.secondary)
                 }

@@ -84,14 +84,23 @@ struct TopicDetailView: View {
             }
             
             Section {
-                Picker("How well do you know this?", selection: $topic.difficulty) {
-                    Text("Not rated").tag(DifficultyRating.notRated)
-                    Text("Understood").tag(DifficultyRating.understood)
-                    Text("Needs revision").tag(DifficultyRating.needsRevision)
+                // Swipe-to-Revise (Season Pass): every rating goes into the signal
+                // pipeline that drives Home, the Weekly Digest and the Season Recap.
+                SwipeToReviseCard(currentRating: topic.difficulty) { rating in
+                    SignalPipeline.recordRating(rating, for: topic, source: .episode, in: modelContext)
+                } content: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("How well do you know this?")
+                            .font(.sgCaption)
+                            .foregroundStyle(.secondary)
+                        Text(topic.title)
+                            .font(.spaceGrotesk(size: 17, weight: .bold))
+                    }
                 }
-                .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
             } footer: {
-                Text("Feeds the \"what should I study next\" recommendation on Home.")
+                Text("Your ratings shape what Home recommends, your Weekly Digest and your Season Recap.")
             }
 
             Section {
@@ -297,6 +306,9 @@ struct TopicDetailView: View {
 
             discoveryError = messages.isEmpty ? nil : messages.joined(separator: "\n")
             phase = .idle
+
+            // AI-assisted tagging runs afterwards in the background; nothing waits on it.
+            await ResourceTaggingService.tagUntaggedResources(in: topic)
         }
     }
 

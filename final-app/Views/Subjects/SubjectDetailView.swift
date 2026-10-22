@@ -10,8 +10,10 @@ import SwiftData
 
 struct SubjectDetailView: View {
     @Bindable var subject: Subject
+    @Query private var digests: [WeeklyDigest]
     @State private var showingAddDeadline = false
     @State private var showingAddTopic = false
+    @State private var recap: SeasonRecap?
 
     var body: some View {
         List {
@@ -45,6 +47,16 @@ struct SubjectDetailView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.red)
+
+                    // Season Pass finale: built fresh each time from the signal pipeline.
+                    Button {
+                        recap = SeasonRecapBuilder.build(for: subject, digests: digests)
+                    } label: {
+                        Label("Season Recap", systemImage: "play.rectangle.on.rectangle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                 }
                 .listRowBackground(Color.clear)
             }
@@ -76,6 +88,9 @@ struct SubjectDetailView: View {
                     Image(systemName: "plus")
                 }
             }
+        }
+        .fullScreenCover(item: $recap) { recap in
+            SeasonRecapView(recap: recap)
         }
         .sheet(isPresented: $showingAddDeadline) {
             AddDeadlineView(subject: subject)

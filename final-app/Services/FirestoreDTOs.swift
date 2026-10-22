@@ -44,6 +44,10 @@ struct ResourceDTO: Codable {
     var isCompleted: Bool
     var isSaved: Bool
     var addedAt: Date
+    // Season Pass tagging. Optional so older Firestore documents still decode.
+    var aiTags: String?
+    var relevanceScore: Double?
+    var tagSource: String?
 }
 
 struct DeadlineDTO: Codable {
@@ -61,6 +65,10 @@ struct StudyProgressDTO: Codable {
     var topicId: UUID?
     var date: Date
     var minutesSpent: Int
+    // Swipe-to-Revise ratings. Optional so older Firestore documents still decode.
+    var understanding: String?
+    var ratingSource: String?
+    var resourceId: UUID?
 }
 
 // MARK: - Model <-> DTO conversions
@@ -90,7 +98,8 @@ extension LearningResource {
             id: id, topicId: topicId, title: title, resourceDescription: resourceDescription,
             urlString: urlString, thumbnailURLString: thumbnailURLString, sourceName: sourceName,
             type: type.rawValue, durationMinutes: durationMinutes, isCompleted: isCompleted,
-            isSaved: isSaved, addedAt: addedAt
+            isSaved: isSaved, addedAt: addedAt,
+            aiTags: aiTagsRaw, relevanceScore: relevanceScore, tagSource: tagSourceRaw
         )
     }
 }
@@ -103,6 +112,9 @@ extension Deadline {
 
 extension StudyProgress {
     var asDTO: StudyProgressDTO {
-        StudyProgressDTO(id: id, topicId: topic?.id, date: date, minutesSpent: minutesSpent)
+        StudyProgressDTO(
+            id: id, topicId: topic?.id, date: date, minutesSpent: minutesSpent,
+            understanding: understandingRaw, ratingSource: ratingSourceRaw, resourceId: resourceID
+        )
     }
 }

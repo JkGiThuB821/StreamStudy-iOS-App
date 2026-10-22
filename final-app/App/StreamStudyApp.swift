@@ -22,6 +22,7 @@ struct StreamStudyApp: App {
             LearningResource.self,
             Deadline.self,
             StudyProgress.self,
+            WeeklyDigest.self,
         ])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

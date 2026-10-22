@@ -11,6 +11,9 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.openURL) private var openURL
     @EnvironmentObject private var authManager: AuthManager
+    @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+    @Query(sort: \WeeklyDigest.weekStart, order: .reverse) private var digests: [WeeklyDigest]
+    @State private var showingDigest = false
     @Query(sort: \Deadline.dueDate) private var deadlines: [Deadline]
     @Query private var subjects: [Subject]
 
@@ -46,6 +49,16 @@ struct HomeView: View {
         deadlines.filter { !$0.isOverdue }
     }
 
+    // The most recent weekly drop and how many of its topics were rated since it dropped.
+    private var currentDigest: WeeklyDigest? { digests.first }
+
+    private func ratedCount(in digest: WeeklyDigest) -> Int {
+        WeeklyDigestService.topics(in: digest, from: allTopics).filter { topic in
+            SignalPipeline.ratings(for: topic).contains { $0.date >= digest.weekStart }
+        }
+        .count
+    }
+
     private var greeting: String {
         guard let name = authManager.displayName, !name.isEmpty else { return "Welcome back" }
         let firstName = name.split(separator: " ").first.map(String.init) ?? name
@@ -63,6 +76,17 @@ struct HomeView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
+
+                if let digest = currentDigest {
+                    WeeklyDigestCard(
+                        digest: digest,
+                        featuredCount: digest.topicIDs.count,
+                        ratedCount: ratedCount(in: digest)
+                    ) {
+                        showingDigest = true
+                    }
+                    .padding(.horizontal)
+                }
 
                 if let topPick = ranked.first {
                     nextWatchCard(for: topPick)
@@ -98,6 +122,20 @@ struct HomeView: View {
         .background(Color.appBackground)
         .navigationTitle("Home")
         .navigationDestination(for: Topic.self) { TopicDetailView(topic: $0) }
+        .sheet(isPresented: $showingDigest) {
+            if let digest = currentDigest {
+                WeeklyDigestView(digest: digest)
+            }
+        }
+        // The Monday "episodes have dropped" notification opens the digest.
+        .onAppear { openDigestIfLinked() }
+        .onChange(of: deepLinkRouter.destination) { _, _ in openDigestIfLinked() }
+    }
+
+    private func openDigestIfLinked() {
+        guard deepLinkRouter.destination == .digest else { return }
+        showingDigest = true
+        deepLinkRouter.clear()
     }
 
     private func nextWatchCard(for recommendation: TopicRecommendation) -> some View {

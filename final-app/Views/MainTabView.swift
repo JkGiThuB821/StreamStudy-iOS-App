@@ -19,8 +19,13 @@ struct MainTabView: View {
     }
 
     @EnvironmentObject private var deepLinkRouter: DeepLinkRouter
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var topics: [Topic]
     @Query private var deadlines: [Deadline]
+    @Query private var digests: [WeeklyDigest]
+    @Query private var progressEntries: [StudyProgress]
+    @AppStorage(NotificationService.weeklyDigestEnabledKey) private var weeklyDigestEnabled = true
 
     @State private var selectedTab: Tab = .home
     @State private var homePath = NavigationPath()
@@ -98,12 +103,36 @@ struct MainTabView: View {
             await NotificationService.shared.requestPermission()
             await NotificationService.shared.scheduleNotifications(for: deadlines)
         }
+        // Season Pass: make sure this week's drop exists (also re-checked when topics
+        // change, e.g. after sign-in sync), then catch up on AI tagging in the background.
+        .task(id: topics.count) {
+            refreshWeeklyDigest()
+            await ResourceTaggingService.backfill(topics: topics)
+        }
+        .task(id: "\(weeklyDigestEnabled)-\(notifications.authorizationStatus.rawValue)") {
+            await NotificationService.shared.scheduleWeeklyDigest()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // A new week may have started while the app was in the background.
+            if phase == .active { refreshWeeklyDigest() }
+        }
         .onAppear {
             route(deepLinkRouter.destination)
         }
         .onChange(of: deepLinkRouter.destination) { _, destination in
             route(destination)
         }
+    }
+
+    // MARK: Season Pass
+
+    private func refreshWeeklyDigest() {
+        WeeklyDigestService.generateIfNeeded(
+            topics: topics,
+            existing: digests,
+            progress: progressEntries,
+            context: modelContext
+        )
     }
 
     // MARK: Deep Linking
@@ -120,6 +149,10 @@ struct MainTabView: View {
         case .calendar:
             // CalendarView reads the deadline ID and clears the destination itself.
             selectedTab = .calendar
+        case .digest:
+            // HomeView opens the digest sheet and clears the destination itself.
+            selectedTab = .home
+            homePath = NavigationPath()
         case nil:
             break
         }

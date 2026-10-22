@@ -77,11 +77,13 @@ final class FirestoreSyncService: ObservableObject {
         do {
             let base = db.collection("users").document(uid)
 
-            async let subjectDocs = base.collection("subjects").getDocuments()
-            async let topicDocs = base.collection("topics").getDocuments()
-            async let resourceDocs = base.collection("resources").getDocuments()
-            async let deadlineDocs = base.collection("deadlines").getDocuments()
-            async let progressDocs = base.collection("studyProgress").getDocuments()
+            // `.server` fails when offline instead of quietly returning Firestore's
+            // local cache (which may be empty) — so local data is never wiped by mistake.
+            async let subjectDocs = base.collection("subjects").getDocuments(source: .server)
+            async let topicDocs = base.collection("topics").getDocuments(source: .server)
+            async let resourceDocs = base.collection("resources").getDocuments(source: .server)
+            async let deadlineDocs = base.collection("deadlines").getDocuments(source: .server)
+            async let progressDocs = base.collection("studyProgress").getDocuments(source: .server)
 
             let subjectSnapshots = try await subjectDocs.documents.map { try $0.data(as: SubjectDTO.self) }
             let topicSnapshots = try await topicDocs.documents.map { try $0.data(as: TopicDTO.self) }
@@ -125,6 +127,9 @@ final class FirestoreSyncService: ObservableObject {
                 resource.id = dto.id
                 resource.isCompleted = dto.isCompleted
                 resource.isSaved = dto.isSaved
+                resource.aiTagsRaw = dto.aiTags ?? ""
+                resource.relevanceScore = dto.relevanceScore
+                resource.tagSourceRaw = dto.tagSource
                 resource.topic = topic
                 modelContext.insert(resource)
             }
@@ -139,6 +144,9 @@ final class FirestoreSyncService: ObservableObject {
             for dto in progressSnapshots {
                 let entry = StudyProgress(date: dto.date, minutesSpent: dto.minutesSpent)
                 entry.id = dto.id
+                entry.understandingRaw = dto.understanding
+                entry.ratingSourceRaw = dto.ratingSource
+                entry.resourceID = dto.resourceId
                 if let topicId = dto.topicId { entry.topic = topicsById[topicId] }
                 modelContext.insert(entry)
             }

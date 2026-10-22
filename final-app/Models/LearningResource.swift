@@ -52,7 +52,12 @@ final class LearningResource {
     var isCompleted: Bool
     var isSaved: Bool
     var addedAt: Date
-    
+
+    // AI-assisted tagging (Season Pass). Defaults keep existing stores migrating automatically.
+    var aiTagsRaw: String = ""          // comma-separated tags
+    var relevanceScore: Double? = nil   // 0...1: how closely this matches its topic
+    var tagSourceRaw: String? = nil     // "gemini" or "metadata"; nil = not tagged yet
+
     var topic: Topic?
     
     init(
@@ -80,4 +85,11 @@ final class LearningResource {
     var lengthCategory: ResourceLength {
         ResourceLength.classify(minutes: durationMinutes)
     }
+
+    var aiTags: [String] {
+        get { aiTagsRaw.split(separator: ",").map(String.init) }
+        set { aiTagsRaw = newValue.joined(separator: ",") }
+    }
+
+    var isTagged: Bool { tagSourceRaw != nil }
 }
