@@ -51,6 +51,7 @@ struct LessonPlanView: View {
             }
         }
         .background(Color.appBackground)
+        .tabBarClearance()   // keeps the last item clear of the tab bar
         .navigationTitle("Lesson Plan")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -137,20 +138,33 @@ struct LessonPlanView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(isDone ? Color.green : (isNext ? Color.red : Color.cardFill))
-                    if isDone {
-                        Image(systemName: "checkmark")
-                            .font(.caption.bold())
-                            .foregroundStyle(.white)
-                    } else {
-                        Text("\(number)")
-                            .font(.spaceGrotesk(size: 14, weight: .bold))
-                            .foregroundStyle(isNext ? Color.white : Color.primary)
+                // Week 11 feedback: the step's tick is tappable and completes the whole step.
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { toggleStep(step) }
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(isDone ? Color.green : (isNext ? Color.red : Color.cardFill))
+                        Circle()
+                            .stroke(isDone ? Color.green : Color.secondary.opacity(0.5), lineWidth: 1.5)
+                        if isDone {
+                            Image(systemName: "checkmark")
+                                .font(.caption.bold())
+                                .foregroundStyle(.white)
+                        } else {
+                            Text("\(number)")
+                                .font(.spaceGrotesk(size: 14, weight: .bold))
+                                .foregroundStyle(isNext ? Color.white : Color.primary)
+                        }
                     }
+                    .frame(width: stepBadgeSize, height: stepBadgeSize)
+                    .frame(minWidth: 44, minHeight: 44)   // comfortable tap target
+                    .contentShape(Rectangle())
                 }
-                .frame(width: stepBadgeSize, height: stepBadgeSize)
+                .buttonStyle(.plain)
+                .accessibilityLabel("Step \(number): \(step.title)")
+                .accessibilityValue(isDone ? "Done" : "Not done")
+                .accessibilityHint(isDone ? "Marks this step as not done" : "Marks this step as done")
 
                 VStack(alignment: .leading, spacing: 4) {
                     AdaptiveStack(spacing: 6) {
@@ -228,6 +242,22 @@ struct LessonPlanView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .opacity(isDone ? 0.75 : 1)
+    }
+
+    // Ticks a whole step on or off. Steps with resources complete (or reopen)
+    // each of their resources, which also logs study time; steps without
+    // resources use the manual flag.
+    private func toggleStep(_ step: LessonStep) {
+        let items = topic.stepResources(for: step)
+        guard !items.isEmpty else {
+            topic.toggleManualCompletion(of: step)
+            return
+        }
+
+        let markDone = !topic.isStepCompleted(step)
+        for resource in items where resource.isCompleted != markDone {
+            topic.toggleCompletion(of: resource, modelContext: modelContext)
+        }
     }
 
     private func checkpoint(_ step: LessonStep) -> some View {

@@ -14,6 +14,9 @@ import SwiftUI
 struct SwipeToReviseCard<Content: View>: View {
     let currentRating: DifficultyRating
     let onRate: (DifficultyRating) -> Void
+    // Compact = the UI proposal's resource card: the two rating buttons sit
+    // inside the card as a split bar, with no badge or hint text.
+    var compact: Bool = false
     @ViewBuilder var content: () -> Content
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -35,7 +38,9 @@ struct SwipeToReviseCard<Content: View>: View {
                 card
             }
 
-            buttons
+            if !compact {
+                buttons
+            }
         }
         .sensoryFeedback(trigger: feedbackTrigger) { _, _ in
             lastRating == .understood ? .success : .warning
@@ -45,18 +50,25 @@ struct SwipeToReviseCard<Content: View>: View {
     // MARK: - Card
 
     private var card: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            content()
+        VStack(alignment: .leading, spacing: compact ? 0 : 10) {
+            if compact {
+                content()
+                    .padding(12)
+                Divider()
+                compactBar
+            } else {
+                content()
 
-            ratingBadge
+                ratingBadge
 
-            if !reduceMotion {
-                Text("Swipe right if you've got it, left if you need to revise.")
-                    .font(.sgCaption2)
-                    .foregroundStyle(.secondary)
+                if !reduceMotion {
+                    Text("Swipe right if you've got it, left if you need to revise.")
+                        .font(.sgCaption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .padding()
+        .padding(compact ? 0 : 16)
         .frame(maxWidth: .infinity, alignment: .leading)
         // Opaque base so the swipe hints behind the card stay hidden until it moves.
         .background(Color.cardFill)
@@ -115,6 +127,33 @@ struct SwipeToReviseCard<Content: View>: View {
         .font(.spaceGrotesk(size: 15, weight: .bold))
         .padding(.horizontal, 20)
         .accessibilityHidden(true)
+    }
+
+    // The proposal's "← Needs Revision | Understood →" split bar.
+    private var compactBar: some View {
+        HStack(spacing: 0) {
+            compactButton("← Needs Revision", rating: .needsRevision, color: .orange)
+            Divider()
+            compactButton("Understood →", rating: .understood, color: .green)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func compactButton(_ title: String, rating: DifficultyRating, color: Color) -> some View {
+        let isCurrent = currentRating == rating
+        return Button {
+            rate(rating)
+        } label: {
+            Text(title)
+                .font(.spaceGrotesk(size: 13, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundStyle(isCurrent ? color : Color.secondary)
+                .background(isCurrent ? color.opacity(0.15) : Color.clear)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(rating == .understood ? "Understood" : "Needs revision")
+        .accessibilityAddTraits(isCurrent ? .isSelected : [])
     }
 
     // MARK: - Accessible equivalent

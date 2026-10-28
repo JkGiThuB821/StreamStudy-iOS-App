@@ -15,15 +15,26 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
     @AppStorage(UserPreferences.onboardedUserIDsKey) private var onboardedUserIDs = ""
+    @AppStorage(UserPreferences.replayOnboardingKey) private var replayOnboarding = false
     @ObservedObject private var network = NetworkMonitor.shared
+    // Accounts already checked against Firestore this session.
+    @State private var checkedOnboardingIDs: Set<String> = []
 
     var body: some View {
         Group {
             if authManager.isSignedIn, let uid = authManager.uid {
-                if UserPreferences.hasOnboarded(uid, in: onboardedUserIDs) {
-                    MainTabView()
-                } else {
+                if replayOnboarding {
                     OnboardingView()
+                } else if UserPreferences.hasOnboarded(uid, in: onboardedUserIDs) {
+                    MainTabView()
+                } else if checkedOnboardingIDs.contains(uid) {
+                    OnboardingView()
+                } else {
+                    // New device or reinstall: check the account before showing onboarding again.
+                    ProgressView("Setting things up…")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.appBackground)
+                        .task(id: uid) { await checkOnboarding(uid: uid) }
                 }
             } else {
                 SignInView()
@@ -59,6 +70,20 @@ struct RootView: View {
         }
     }
     
+    // Onboarding only shows for genuinely new accounts: skipped if this account
+    // finished it on another device (Firestore flag) or already has subjects here.
+    private func checkOnboarding(uid: String) async {
+        let localSubjects = (try? modelContext.fetchCount(FetchDescriptor<Subject>())) ?? 0
+        var done = localSubjects > 0
+        if !done, network.isConnected {
+            done = await syncService.hasCompletedOnboarding(uid: uid)
+        }
+        if done {
+            onboardedUserIDs = UserPreferences.adding(uid, to: onboardedUserIDs)
+        }
+        checkedOnboardingIDs.insert(uid)
+    }
+
     private func pushInBackgroundTask(uid: String) {
         let task = BackgroundTaskBox()
         task.id = UIApplication.shared.beginBackgroundTask(withName: "FirestorePush") {

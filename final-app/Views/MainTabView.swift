@@ -226,28 +226,20 @@ private struct CustomTabBar: View {
 
         } label: {
 
-            Image(systemName: icon)
-                .font(.title3)
-                .fontWeight(selectedTab == tab ? .semibold : .regular)
-                .foregroundStyle(
-                    selectedTab == tab
-                        ? Color.primary
-                        : Color.secondary
-                )
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 42)
-                .background {
-
-                    if selectedTab == tab {
-
-                        RoundedRectangle(
-                            cornerRadius: 12
-                        )
-                        .fill(
-                            .red.opacity(0.18)
-                        )
-                    }
-                }
+            // Icon with its label underneath, as in the UI design proposal.
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .fontWeight(selectedTab == tab ? .semibold : .regular)
+                Text(label)
+                    .font(.spaceGrotesk(size: 10, weight: selectedTab == tab ? .bold : .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(selectedTab == tab ? Color.primary : Color.secondary)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 46)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

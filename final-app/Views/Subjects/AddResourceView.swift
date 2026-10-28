@@ -26,7 +26,7 @@ struct AddResourceView: View {
     }
 
     private var isFormValid: Bool {
-        !title.trimmingCharacters(in: .whitespaces).isEmpty && isValidURL
+        !title.isBlank && isValidURL
     }
 
     var body: some View {
@@ -34,10 +34,13 @@ struct AddResourceView: View {
             Form {
                 Section("New Resource") {
                     TextField("Title", text: $title)
+                        .characterLimit($title, TextLimits.title)
                     TextField("URL (https://...)", text: $urlString)
                         .textInputAutocapitalization(.never)
                         .keyboardType(.URL)
+                        .characterLimit($urlString, TextLimits.url)
                     TextField("Source (e.g. YouTube, Apple Developer)", text: $sourceName)
+                        .characterLimit($sourceName, TextLimits.name)
                     Picker("Type", selection: $type) {
                         ForEach(ResourceType.allCases, id: \.self) { Text($0.displayName).tag($0) }
                     }

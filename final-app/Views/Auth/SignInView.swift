@@ -14,7 +14,6 @@ struct SignInView: View {
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var socialSignInNote: String?
 
     enum Mode { case signIn, signUp }
 
@@ -30,92 +29,72 @@ struct SignInView: View {
             Color.appBackground.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(spacing: 24) {
                     Text("StreamStudy")
-                        .font(.spaceGrotesk(size: 22, weight: .bold))
+                        .font(.spaceGrotesk(size: 26, weight: .bold, relativeTo: .title))
                         .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(spacing: 6) {
                         Text("YOUR LEARNING. YOUR SCHEDULE.")
-                            .font(.sgCaption)
+                            .font(.spaceGrotesk(size: 12, weight: .bold))
+                            .tracking(1.5)
                             .foregroundStyle(.secondary)
                         Text(mode == .signIn ? "Welcome back" : "Start learning today")
-                            .font(.spaceGrotesk(size: 28, weight: .bold))
+                            .font(.spaceGrotesk(size: 30, weight: .bold, relativeTo: .largeTitle))
                             .foregroundStyle(.primary)
                     }
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 24)
 
-                    Picker("Mode", selection: $mode) {
-                        Text("Sign In").tag(Mode.signIn)
-                        Text("Create Account").tag(Mode.signUp)
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: mode) { authManager.errorMessage = nil }
+                    // The form card, as in the mock-up.
+                    VStack(spacing: 14) {
+                        PillPicker(selection: $mode, options: [(.signIn, "Sign In"), (.signUp, "Create Account")])
+                            .onChange(of: mode) { authManager.errorMessage = nil }
 
-                    VStack(spacing: 12) {
                         if mode == .signUp {
                             TextField("Full name", text: $fullName)
-                                .textFieldStyle(.roundedBorder)
+                                .characterLimit($fullName, TextLimits.name)
+                                .textContentType(.name)
+                                .inputFieldStyle()
                         }
                         TextField("Email address", text: $email)
-                            .textFieldStyle(.roundedBorder)
+                            .characterLimit($email, TextLimits.email)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
+                            .textContentType(.emailAddress)
+                            .inputFieldStyle()
                         SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
-                    }
+                            .characterLimit($password, TextLimits.password)
+                            .textContentType(mode == .signIn ? .password : .newPassword)
+                            .inputFieldStyle()
 
-                    if let errorMessage = authManager.errorMessage {
-                        Text(errorMessage)
-                            .font(.sgCaption)
-                            .foregroundStyle(.red)
-                    }
+                        if let errorMessage = authManager.errorMessage {
+                            Text(errorMessage)
+                                .font(.sgCaption)
+                                .foregroundStyle(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
 
-                    Button(action: submit) {
-                        ZStack {
-                            Text(mode == .signIn ? "Sign In" : "Create Account")
-                                .opacity(authManager.isLoading ? 0 : 1)
-                            if authManager.isLoading {
-                                ProgressView().tint(.white)
+                        Button(action: submit) {
+                            ZStack {
+                                Text(mode == .signIn ? "Sign In" : "Create Account")
+                                    .opacity(authManager.isLoading ? 0 : 1)
+                                if authManager.isLoading {
+                                    ProgressView().tint(.white)
+                                }
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(isFormValid ? .red : .red.opacity(0.4))
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .buttonStyle(PrimaryButtonStyle())
+                        .disabled(!isFormValid || authManager.isLoading)
                     }
-                    .disabled(!isFormValid || authManager.isLoading)
+                    .padding(18)
+                    .cardStyle(cornerRadius: 16)
 
-                    HStack { Divider(); Text("OR").foregroundStyle(.secondary).font(.sgCaption); Divider() }
-
-                    Button(action: { socialSignInNote = "Sign in with Apple isn't wired up yet." }) {
-                        Label("Continue with Apple", systemImage: "apple.logo")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.primary)
-                            .foregroundStyle(Color.appBackground)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-
-                    Button(action: { socialSignInNote = "Google sign-in isn't wired up yet." }) {
-                        Label("Continue with Google", systemImage: "g.circle.fill")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(.blue)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-
-                    if let socialSignInNote {
-                        Text(socialSignInNote)
-                            .font(.sgCaption2)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Text("By continuing, you agree to our Terms of Use and Privacy Policy")
+                    Text("By continuing, you agree to our Terms of Use and Privacy Policy.")
                         .font(.sgCaption2)
                         .foregroundStyle(.secondary)
-                        .padding(.top, 8)
+                        .multilineTextAlignment(.center)
                 }
                 .padding(24)
                 // Keeps the form a readable width in landscape and on iPad.

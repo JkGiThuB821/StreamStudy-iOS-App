@@ -48,6 +48,7 @@ struct ResourceDTO: Codable {
     var aiTags: String?
     var relevanceScore: Double?
     var tagSource: String?
+    var notes: String?
 }
 
 struct DeadlineDTO: Codable {
@@ -99,7 +100,8 @@ extension LearningResource {
             urlString: urlString, thumbnailURLString: thumbnailURLString, sourceName: sourceName,
             type: type.rawValue, durationMinutes: durationMinutes, isCompleted: isCompleted,
             isSaved: isSaved, addedAt: addedAt,
-            aiTags: aiTagsRaw, relevanceScore: relevanceScore, tagSource: tagSourceRaw
+            aiTags: aiTagsRaw, relevanceScore: relevanceScore, tagSource: tagSourceRaw,
+            notes: notes
         )
     }
 }

@@ -16,6 +16,8 @@ struct CalendarView: View {
     @State private var displayedMonth = Date.now
     @State private var selectedDate = Date.now
     @State private var showingAddDeadline = false
+    // True after tapping a day: the list shows only that day's deadlines.
+    @State private var showsSelectedDayOnly = false
 
     @ScaledMetric(relativeTo: .footnote) private var dayCircleSize: CGFloat = 38
     @ScaledMetric(relativeTo: .footnote) private var dayCellHeight: CGFloat = 56
@@ -33,27 +35,29 @@ struct CalendarView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                monthSwitcher
-                monthGrid
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Deadlines & assessments")
+                    .font(.sgSubheadline)
+                    .foregroundStyle(.secondary)
 
-                selectedDayHeader
-                selectedDeadlineList
+                monthSwitcher
+
+                VStack(spacing: 12) {
+                    monthGrid
+                }
+                .padding(.vertical, 12)
+                .cardStyle()
+
+                priorityLegend
+
+                upcomingSection
             }
             .padding(.horizontal)
             .padding(.bottom, 30)
         }
         .background(Color.appBackground)
+        .tabBarClearance()   // keeps the last item clear of the tab bar
         .navigationTitle("Calendar")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingAddDeadline = true
-                } label: {
-                    Image(systemName: "plus")
-                }
-            }
-        }
         .sheet(isPresented: $showingAddDeadline) {
             AddDeadlineView(subject: nil)
         }
@@ -68,91 +72,40 @@ struct CalendarView: View {
     // MARK: - Month Header
 
     private var monthSwitcher: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(
-                        displayedMonth.formatted(
-                            .dateTime.month(.wide)
-                        )
-                    )
-                    .font(
-                        .spaceGrotesk(
-                            size: 28,
-                            weight: .bold
-                        )
-                    )
+        HStack {
+            monthButton(systemImage: "chevron.left", label: "Previous month") { changeMonth(by: -1) }
+            Spacer()
+            Text(monthTitle)
+                .font(.spaceGrotesk(size: 20, weight: .bold, relativeTo: .title3))
+            Spacer()
+            monthButton(systemImage: "chevron.right", label: "Next month") { changeMonth(by: 1) }
+        }
+    }
 
-                    Text(
-                        displayedMonth.formatted(
-                            .dateTime.year()
-                        )
-                    )
-                    .font(
-                        .spaceGrotesk(
-                            size: 15,
-                            weight: .medium
-                        )
-                    )
-                    .foregroundStyle(.secondary)
+    private func monthButton(systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.footnote.bold())
+                .frame(width: monthButtonSize, height: monthButtonSize)
+                .cardStyle(cornerRadius: 8)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    // Low / Medium / High dots, as in the mock-up.
+    private var priorityLegend: some View {
+        HStack(spacing: 14) {
+            ForEach(DeadlinePriority.allCases, id: \.self) { priority in
+                HStack(spacing: 5) {
+                    Circle().fill(priority.color).frame(width: 7, height: 7)
+                    Text("\(priority.displayName) Priority")
+                        .font(.sgCaption2)
+                        .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                HStack(spacing: 8) {
-//                    Button {
-//                        displayedMonth = .now
-//                        selectedDate = .now
-//                    } label: {
-//                        Text("Today")
-//                            .font(
-//                                .spaceGrotesk(
-//                                    size: 12,
-//                                    weight: .semibold
-//                                )
-//                            )
-//                            .padding(.horizontal, 12)
-//                            .padding(.vertical, 8)
-//                            .background(.white.opacity(0.08))
-//                            .clipShape(Capsule())
-//                    }
-//                    .buttonStyle(.plain)
-
-                    Button {
-                        changeMonth(by: -1)
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.footnote.bold())
-                            .frame(width: monthButtonSize, height: monthButtonSize)
-                            .background(Color.cardFill)
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        changeMonth(by: 1)
-                    } label: {
-                        Image(systemName: "chevron.right")
-                            .font(.footnote.bold())
-                            .frame(width: monthButtonSize, height: monthButtonSize)
-                            .background(Color.cardFill)
-                            .clipShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(.red)
-                    .frame(width: 6, height: 6)
-
-                Text("\(monthDeadlineCount) deadlines this month")
-                    .font(.sgCaption)
-                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.top, 8)
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Calendar Grid
@@ -162,7 +115,7 @@ struct CalendarView: View {
             HStack {
                 ForEach(
                     Array(
-                        ["S", "M", "T", "W", "T", "F", "S"]
+                        ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
                             .enumerated()
                     ),
                     id: \.offset
@@ -215,6 +168,7 @@ struct CalendarView: View {
         return Button {
             withAnimation(.easeInOut(duration: 0.15)) {
                 selectedDate = day.date
+                showsSelectedDayOnly = true
             }
         } label: {
             VStack(spacing: 6) {
@@ -291,196 +245,110 @@ struct CalendarView: View {
         )
     }
 
-    // MARK: - Selected Day
+    // MARK: - Upcoming Deadlines
 
-    private var selectedDayHeader: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(
-                    selectedDate.formatted(
-                        .dateTime.weekday(.wide)
-                    )
-                )
-                .font(
-                    .spaceGrotesk(
-                        size: 24,
-                        weight: .bold
-                    )
-                )
-
-                Text(
-                    selectedDate.formatted(
-                        .dateTime.day().month(.wide)
-                    )
-                )
-                .font(.sgCaption)
-                .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(selectedDeadlines.count)")
-                    .font(
-                        .spaceGrotesk(
-                            size: 30,
-                            weight: .bold
-                        )
-                    )
-                    .foregroundStyle(.red)
-
-                Text(
-                    selectedDeadlines.count == 1
-                        ? "deadline"
-                        : "deadlines"
-                )
-                .font(.sgCaption2)
-                .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.top, 4)
+    private var upcomingDeadlines: [Deadline] {
+        deadlines.filter { !$0.isOverdue }
     }
 
-    // MARK: - Deadline List
+    private var listedDeadlines: [Deadline] {
+        showsSelectedDayOnly ? selectedDeadlines : upcomingDeadlines
+    }
 
-    private var selectedDeadlineList: some View {
-        VStack(spacing: 10) {
-            ForEach(selectedDeadlines) { deadline in
+    private var upcomingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(showsSelectedDayOnly ? selectedDate.formatted(.dateTime.weekday(.wide).day().month(.wide)) : "Upcoming Deadlines")
+                        .font(.spaceGrotesk(size: 20, weight: .bold, relativeTo: .title3))
+                    if showsSelectedDayOnly {
+                        Button("Show all upcoming") {
+                            withAnimation { showsSelectedDayOnly = false }
+                        }
+                        .font(.sgCaption)
+                    }
+                }
+                Spacer()
+                Button {
+                    showingAddDeadline = true
+                } label: {
+                    Label("Add", systemImage: "plus")
+                        .font(.spaceGrotesk(size: 14, weight: .bold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.red, in: RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(.white)
+                }
+                .accessibilityLabel("Add deadline")
+            }
+
+            ForEach(listedDeadlines) { deadline in
                 deadlineCard(deadline)
             }
 
-            if selectedDeadlines.isEmpty {
+            if listedDeadlines.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle")
                         .font(.title)
                         .foregroundStyle(.green)
-
-                    Text("Nothing due today")
-                        .font(
-                            .spaceGrotesk(
-                                size: 15,
-                                weight: .semibold
-                            )
-                        )
-
-                    Text("Use this day to build some progress.")
+                    Text(showsSelectedDayOnly ? "Nothing due on this day" : "No upcoming deadlines")
+                        .font(.spaceGrotesk(size: 15, weight: .semibold))
+                    Text("Use the time to build some progress.")
                         .font(.sgCaption)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(24)
-                .background(Color.cardFill)
-                .clipShape(
-                    RoundedRectangle(
-                        cornerRadius: 16
-                    )
-                )
+                .cardStyle()
             }
         }
     }
 
-    private func deadlineCard(
-        _ deadline: Deadline
-    ) -> some View {
+    private func deadlineCard(_ deadline: Deadline) -> some View {
         HStack(spacing: 14) {
             RoundedRectangle(cornerRadius: 3)
-                .fill(
-                    priorityColor(deadline.priority)
-                )
+                .fill(deadline.priority.color)
                 .frame(width: 5)
 
-            VStack(
-                alignment: .leading,
-                spacing: 6
-            ) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(deadline.title)
-                    .font(
-                        .spaceGrotesk(
-                            size: 16,
-                            weight: .bold
-                        )
-                    )
+                    .font(.spaceGrotesk(size: 16, weight: .bold))
                     .lineLimit(3)
-
-                HStack(spacing: 6) {
-                    Image(systemName: "book.closed")
-                        .font(.caption2.weight(.semibold))
-
-                    Text(
-                        deadline.subject?.name
-                            ?? "General"
-                    )
+                Text(deadline.subject?.name ?? "General")
                     .font(.sgCaption)
-                }
-                .foregroundStyle(.secondary)
+                    .foregroundStyle(deadline.subject.map { Color(hex: $0.colorHex) } ?? Color.secondary)
+                Text(deadline.dueDate.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
+                    .font(.sgCaption2)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            VStack(
-                alignment: .trailing,
-                spacing: 5
-            ) {
-                Text(
-                    priorityLabel(
-                        deadline.priority
-                    )
-                )
-                .font(
-                    .spaceGrotesk(
-                        size: 10,
-                        weight: .bold
-                    )
-                )
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(
-                    priorityColor(
-                        deadline.priority
-                    )
-                    .opacity(0.14)
-                )
-                .foregroundStyle(
-                    priorityColor(
-                        deadline.priority
-                    )
-                )
-                .clipShape(Capsule())
-
-                Text(
-                    deadline.dueDate.formatted(
-                        .dateTime.hour().minute()
-                    )
-                )
-                .font(.sgCaption2)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 6) {
+                Text(daysLeftText(deadline))
+                    .font(.spaceGrotesk(size: 14, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                BadgeLabel(text: deadline.priority.displayName, color: deadline.priority.color, filled: false)
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(
-                cornerRadius: 18
-            )
-            .fill(Color.cardFill)
-        )
-        .overlay {
-            RoundedRectangle(
-                cornerRadius: 18
-            )
-            .stroke(
-                Color.cardStroke,
-                lineWidth: 1
-            )
-        }
+        .padding(14)
+        .fixedSize(horizontal: false, vertical: true)
+        .cardStyle()
+        .accessibilityElement(children: .combine)
         .contextMenu {
             Button(role: .destructive) {
                 modelContext.delete(deadline)
             } label: {
-                Label(
-                    "Delete Deadline",
-                    systemImage: "trash"
-                )
+                Label("Delete Deadline", systemImage: "trash")
             }
+        }
+    }
+
+    private func daysLeftText(_ deadline: Deadline) -> String {
+        switch deadline.daysRemaining {
+        case ...0: return "Today"
+        case 1: return "1 day"
+        default: return "\(deadline.daysRemaining) days"
         }
     }
 
@@ -594,6 +462,7 @@ struct CalendarView: View {
            ) {
             displayedMonth = deadline.dueDate
             selectedDate = deadline.dueDate
+            showsSelectedDayOnly = true
         } else {
             selectedDate = .now
         }

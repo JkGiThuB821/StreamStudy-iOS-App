@@ -23,55 +23,78 @@ struct AddSubjectView: View {
     ]
     private static let colors = ["#E50914", "#2ECC71", "#E91E8C", "#3498DB", "#9B59B6", "#F39C12"]
 
+    @ScaledMetric(relativeTo: .body) private var iconTileSize: CGFloat = 46
+    @ScaledMetric(relativeTo: .body) private var colorSwatchSize: CGFloat = 30
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Add New Subject") {
-                    TextField("Subject name", text: $name)
-                    TextField("Short description", text: $description)
-                }
-
-                Section("Icon") {
-                    ScrollView(.horizontal) {
-                        HStack {
-                            ForEach(Self.icons, id: \.self) { icon in
-                                Image(systemName: icon)
-                                    .padding(10)
-                                    .background(selectedIcon == icon ? Color.accentColor : .gray.opacity(0.2))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    .onTapGesture { selectedIcon = icon }
-                            }
-                        }
-                    }
-                }
-
-                Section("Color") {
-                    HStack {
-                        ForEach(Self.colors, id: \.self) { hex in
-                            Circle()
-                                .fill(Color(hex: hex))
-                                .frame(width: 30, height: 30)
-                                .overlay(
-                                    Circle().stroke(.white, lineWidth: selectedColor == hex ? 2 : 0)
-                                )
-                                .onTapGesture { selectedColor = hex }
-                        }
-                    }
-                }
-
-                Button("Add Subject") {
-                    addSubject()
-                }
-                .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            .font(.sgBody)
-            .navigationTitle("New Subject")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("Add New Subject")
+                        .font(.spaceGrotesk(size: 22, weight: .bold, relativeTo: .title2))
+                    Spacer()
                     Button("Cancel") { dismiss() }
+                        .font(.spaceGrotesk(size: 15, weight: .semibold))
                 }
+
+                TextField("Subject name", text: $name)
+                    .characterLimit($name, TextLimits.name)
+                    .inputFieldStyle()
+
+                TextField("Short description", text: $description)
+                    .characterLimit($description, TextLimits.shortDescription)
+                    .inputFieldStyle()
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(Self.icons, id: \.self) { icon in
+                            Button {
+                                selectedIcon = icon
+                            } label: {
+                                Image(systemName: icon)
+                                    .font(.title3)
+                                    .frame(width: iconTileSize, height: iconTileSize)
+                                    .foregroundStyle(selectedIcon == icon ? Color.white : Color.primary)
+                                    .background(selectedIcon == icon ? Color.red : Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(icon)
+                            .accessibilityAddTraits(selectedIcon == icon ? .isSelected : [])
+                        }
+                    }
+                    .padding(2)
+                }
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(Self.colors, id: \.self) { hex in
+                            Button {
+                                selectedColor = hex
+                            } label: {
+                                Circle()
+                                    .fill(Color(hex: hex))
+                                    .frame(width: colorSwatchSize, height: colorSwatchSize)
+                                    .overlay(Circle().stroke(Color.primary, lineWidth: selectedColor == hex ? 2.5 : 0).padding(-3))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Colour \(hex)")
+                            .accessibilityAddTraits(selectedColor == hex ? .isSelected : [])
+                        }
+                    }
+                    .padding(4)
+                }
+
+                Button("Add Subject") { addSubject() }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(name.isBlank)
+                    .padding(.top, 6)
             }
+            .padding(20)
         }
+        .font(.sgBody)
+        .background(Color.appBackground)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private func addSubject() {

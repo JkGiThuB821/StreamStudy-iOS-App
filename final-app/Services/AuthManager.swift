@@ -83,6 +83,17 @@ final class AuthManager: ObservableObject {
         displayName = name
     }
 
+    // Emails a Firebase password reset link and returns a message to show.
+    func sendPasswordReset() async -> String {
+        guard let email = userEmail else { return "This account has no email address." }
+        do {
+            try await Auth.auth().sendPasswordReset(withEmail: email)
+            return "We've emailed a password reset link to \(email)."
+        } catch {
+            return friendlyMessage(for: error)
+        }
+    }
+
     func signOut() {
         do {
             try Auth.auth().signOut()

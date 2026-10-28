@@ -13,6 +13,9 @@ enum UserPreferences {
     // Comma-separated Firebase user IDs that have finished onboarding on this device.
     static let onboardedUserIDsKey = "onboardedUserIDs"
 
+    // Set by Account → "Show Onboarding Again" to replay it on purpose.
+    static let replayOnboardingKey = "replayOnboarding"
+
     // Display name saved on the device, so it works offline.
     static func displayNameKey(for uid: String) -> String {
         "displayName.\(uid)"

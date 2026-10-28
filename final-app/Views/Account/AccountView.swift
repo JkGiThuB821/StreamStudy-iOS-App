@@ -20,9 +20,13 @@ struct AccountView: View {
 
     @State private var tab: Tab = .profile
     @State private var testSent = false
+    @State private var showingRevisionMode = false
+    @State private var passwordResetMessage: String?
+    @State private var showingDemoConfirm = false
+    @State private var demoMessage: String?
     @State private var nameDraft = ""
-    @AppStorage(UserPreferences.onboardedUserIDsKey) private var onboardedUserIDs = ""
-    @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 44
+    @AppStorage(UserPreferences.replayOnboardingKey) private var replayOnboarding = false
+    @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 56
 
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
     @AppStorage(NotificationService.remindersEnabledKey) private var remindersEnabled = true
@@ -33,12 +37,9 @@ struct AccountView: View {
 
     var body: some View {
         ScrollView {
-            Picker("Section", selection: $tab) {
-                Text("Profile & Settings").tag(Tab.profile)
-                Text("Notifications").tag(Tab.notifications)
-            }
-            .pickerStyle(.segmented)
-            .padding()
+            // Red pill switcher, as in the mock-up.
+            PillPicker(selection: $tab, options: [(.profile, "Profile & Settings"), (.notifications, "Notifications")])
+                .padding()
 
             Group {
                 if tab == .profile {
@@ -51,6 +52,7 @@ struct AccountView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color.appBackground)
+        .tabBarClearance()   // keeps the last item clear of the tab bar
         .navigationTitle("Account")
         .task {
             await notifications.refreshStatus()
@@ -58,85 +60,202 @@ struct AccountView: View {
         .onAppear {
             nameDraft = authManager.displayName ?? ""
         }
+        .fullScreenCover(isPresented: $showingRevisionMode) {
+            RevisionModeView()
+        }
+        .alert(
+            "Change Password",
+            isPresented: Binding(
+                get: { passwordResetMessage != nil },
+                set: { if !$0 { passwordResetMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(passwordResetMessage ?? "")
+        }
     }
 
     // MARK: - Profile
 
     private var profileSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Circle().fill(.red).frame(width: avatarSize, height: avatarSize)
-                    .overlay(Text(initial).font(.sgHeadline).foregroundStyle(.white))
-                VStack(alignment: .leading) {
-                    Text(authManager.displayName ?? authManager.userEmail ?? "Account").font(.sgHeadline)
-                    Text(authManager.userEmail ?? "Signed in").font(.sgCaption).foregroundStyle(.secondary)
+            profileCard
+
+            // Revision Mode, highlighted as in the mock-up.
+            Button {
+                showingRevisionMode = true
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "scope")
+                        .font(.title2)
+                        .foregroundStyle(.red)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Start Revision Mode")
+                            .font(.spaceGrotesk(size: 16, weight: .bold))
+                        Text("Swipe through your topics before an exam")
+                            .font(.sgCaption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(.red)
+                }
+                .padding(16)
+                .background(Color.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.red.opacity(0.4)))
+            }
+            .buttonStyle(.plain)
+
+            // Appearance
+            VStack(alignment: .leading, spacing: 12) {
+                Text("APPEARANCE")
+                    .font(.spaceGrotesk(size: 12, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(.secondary)
+                AdaptiveStack(spacing: 12) {
+                    Text("Theme").font(.spaceGrotesk(size: 15, weight: .semibold))
+                    Spacer(minLength: 0)
+                    PillPicker(selection: $appearance, options: AppAppearance.allCases.map { ($0, $0.displayName) })
+                        .frame(maxWidth: 240)
                 }
             }
+            .padding(16)
+            .cardStyle()
 
-            connectionRow
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("DISPLAY NAME").font(.sgCaption).foregroundStyle(.secondary)
+            // Display name
+            VStack(alignment: .leading, spacing: 10) {
+                Text("DISPLAY NAME")
+                    .font(.spaceGrotesk(size: 12, weight: .bold))
+                    .tracking(1)
+                    .foregroundStyle(.secondary)
                 HStack {
                     TextField("Display name", text: $nameDraft)
+                        .characterLimit($nameDraft, TextLimits.name)
                         .textContentType(.name)
                         .textInputAutocapitalization(.words)
                     Button("Save") {
                         Task { await authManager.updateDisplayName(nameDraft) }
                     }
                     .font(.spaceGrotesk(size: 14, weight: .bold))
-                    .disabled(
-                        nameDraft.trimmingCharacters(in: .whitespaces).isEmpty
-                            || nameDraft == authManager.displayName
-                    )
+                    .disabled(nameDraft.isBlank || nameDraft == authManager.displayName)
                 }
-                .padding(12)
-                .background(Color.cardFill)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .inputFieldStyle()
+            }
+            .padding(16)
+            .cardStyle()
+
+            // Settings list
+            VStack(spacing: 0) {
+                settingsRow("Change Password", systemImage: "key.fill", color: .orange) {
+                    Task { passwordResetMessage = await authManager.sendPasswordReset() }
+                }
+                .disabled(!network.isConnected)
+                Divider().padding(.leading, 52)
+                settingsRow("Load Demo Data", systemImage: "tray.and.arrow.down.fill", color: .blue) {
+                    showingDemoConfirm = true
+                }
+                Divider().padding(.leading, 52)
+                settingsRow("Show Onboarding Again", systemImage: "sparkles", color: .purple) {
+                    replayOnboarding = true
+                }
+            }
+            .cardStyle()
+            .confirmationDialog(
+                "Load demo data?",
+                isPresented: $showingDemoConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Load Demo Data") { loadDemoData() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Adds sample subjects, topics, study history, ratings, deadlines and weekly drops to this account. Best used on a separate demo account.")
             }
 
-            Button("Start Revision Mode") {}
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("APPEARANCE").font(.sgCaption).foregroundStyle(.secondary)
-                Picker("Theme", selection: $appearance) {
-                    ForEach(AppAppearance.allCases) { Text($0.displayName).tag($0) }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                row(icon: "pencil", label: "Edit Profile")
-                row(icon: "key.fill", label: "Change Password")
-                row(icon: "link", label: "Linked Accounts")
-                row(icon: "square.and.arrow.up", label: "Export Data")
+            if let demoMessage {
+                Text(demoMessage)
+                    .font(.sgCaption)
+                    .foregroundStyle(.secondary)
             }
 
             syncRow
-
-            Button {
-                guard let uid = authManager.uid else { return }
-                onboardedUserIDs = UserPreferences.removing(uid, from: onboardedUserIDs)
-            } label: {
-                Label("Show Onboarding Again", systemImage: "sparkles")
-            }
+                .padding(16)
+                .cardStyle()
 
             Button("Sign Out", role: .destructive) {
                 authManager.signOut()
             }
-            .padding(.top, 20)
+            .font(.spaceGrotesk(size: 16, weight: .bold))
+            .frame(maxWidth: .infinity)
+            .padding(.top, 8)
         }
         .padding(.horizontal)
     }
 
+    private var profileCard: some View {
+        HStack(spacing: 14) {
+            Circle()
+                .fill(LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .frame(width: avatarSize, height: avatarSize)
+                .overlay(Text(initial).font(.spaceGrotesk(size: 20, weight: .bold)).foregroundStyle(.white))
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(authManager.displayName ?? authManager.userEmail ?? "Account")
+                    .font(.spaceGrotesk(size: 18, weight: .bold))
+                Text(authManager.userEmail ?? "Signed in")
+                    .font(.sgCaption)
+                    .foregroundStyle(.secondary)
+                connectionRow
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .cardStyle()
+    }
+
+    private func settingsRow(_ title: String, systemImage: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .foregroundStyle(color)
+                    .frame(width: 24)
+                Text(title)
+                    .font(.spaceGrotesk(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.primary)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func loadDemoData() {
+        let added = DemoDataService.load(into: modelContext)
+        demoMessage = added == 0
+            ? "Demo data is already loaded."
+            : "Added \(added) demo subject\(added == 1 ? "" : "s"). Check Home, the Weekly Digest and each subject's Season Recap."
+
+        // Upload straight away, so the next launch's sync doesn't remove it.
+        guard added > 0, network.isConnected, let uid = authManager.uid else { return }
+        Task { await syncService.push(uid: uid, modelContext: modelContext) }
+    }
+
     private var connectionRow: some View {
         Label(
-            network.isConnected ? "Online" : "Offline: changes are saved on this device and sync when you reconnect",
-            systemImage: network.isConnected ? "wifi" : "wifi.slash"
+            network.isConnected
+                ? (syncService.lastSyncedAt != nil ? "Online Â· synced with Firestore" : "Online")
+                : "Offline: changes sync when you reconnect",
+            systemImage: "circle.fill"
         )
-        .font(.spaceGrotesk(size: 13, weight: .semibold))
+        .labelStyle(DotLabelStyle())
+        .font(.spaceGrotesk(size: 12, weight: .semibold))
         .foregroundStyle(network.isConnected ? Color.green : Color.orange)
     }
 
@@ -144,6 +263,7 @@ struct AccountView: View {
         VStack(alignment: .leading, spacing: 6) {
             AdaptiveStack(spacing: 8) {
                 Text("iCloud / Firestore Sync")
+                    .font(.spaceGrotesk(size: 15, weight: .semibold))
                 Spacer(minLength: 0)
                 if syncService.isSyncing {
                     ProgressView().controlSize(.small)
@@ -152,7 +272,8 @@ struct AccountView: View {
                         guard let uid = authManager.uid else { return }
                         Task { await syncService.syncNow(uid: uid, modelContext: modelContext) }
                     }
-                    .font(.spaceGrotesk(size: 12, weight: .bold))
+                    .font(.spaceGrotesk(size: 13, weight: .bold))
+                    .buttonStyle(.bordered)
                     .disabled(!network.isConnected)
                 }
             }
@@ -182,7 +303,7 @@ struct AccountView: View {
             permissionCard
 
             VStack(alignment: .leading, spacing: 12) {
-                Text("NOTIFICATION PREFERENCES").font(.sgCaption).foregroundStyle(.secondary)
+                Text("Notification Preferences").font(.spaceGrotesk(size: 18, weight: .bold, relativeTo: .headline))
 
                 Toggle("Deadline Reminders", isOn: $remindersEnabled)
                     .tint(.red)
@@ -235,9 +356,11 @@ struct AccountView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .padding(16)
+            .cardStyle()
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("UPCOMING REMINDERS").font(.sgCaption).foregroundStyle(.secondary)
+                Text("Upcoming Reminders").font(.spaceGrotesk(size: 18, weight: .bold, relativeTo: .headline))
 
                 if notifications.pendingReminders.isEmpty {
                     Text(emptyRemindersMessage)
@@ -305,8 +428,7 @@ struct AccountView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.cardFill)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .cardStyle(cornerRadius: 12)
     }
 
     private var isAuthorized: Bool {
@@ -345,12 +467,14 @@ struct AccountView: View {
         String((authManager.userEmail ?? "A").prefix(1)).uppercased()
     }
 
-    private func row(icon: String, label: String) -> some View {
-        HStack {
-            Image(systemName: icon).frame(minWidth: 24)
-            Text(label)
-            Spacer()
-            Image(systemName: "chevron.right").font(.sgCaption).foregroundStyle(.secondary)
+}
+
+// A small coloured dot before the text ("â— Online").
+private struct DotLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 5) {
+            configuration.icon.font(.system(size: 6))
+            configuration.title
         }
     }
 }

@@ -12,6 +12,7 @@ import SwiftData
 nonisolated enum RatingSource: String, Codable {
     case episode   // topic (episode) detail screen
     case digest    // a Weekly Digest card
+    case revision  // a Revision Mode session
 }
 
 // One entry in the Season Pass signal pipeline. An entry is either study time

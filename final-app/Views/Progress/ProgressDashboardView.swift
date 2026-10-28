@@ -9,13 +9,38 @@ import SwiftUI
 import SwiftData
 import Charts
 
+// Progress tab, laid out as in the UI design proposal (mock-up 7): three
+// headline numbers, a ring per subject (filterable), and a study activity
+// chart with a Week / Month toggle.
 struct ProgressDashboardView: View {
-    @Query private var subjects: [Subject]
+    @Query(sort: \Subject.createdAt) private var subjects: [Subject]
     @Query private var progressEntries: [StudyProgress]
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    @ScaledMetric(relativeTo: .subheadline) private var subjectCardWidth: CGFloat = 170
+    @State private var subjectFilter: UUID?          // nil = All
+    @State private var range: ActivityRange = .week
+
     @ScaledMetric(relativeTo: .caption) private var chartHeight: CGFloat = 190
+    @ScaledMetric(relativeTo: .subheadline) private var ringSize: CGFloat = 64
+
+    enum ActivityRange: Hashable { case week, month }
+
+    private var calendar: Calendar { .current }
+
+    // MARK: - Data
+
+    private var visibleSubjects: [Subject] {
+        guard let subjectFilter else { return subjects }
+        return subjects.filter { $0.id == subjectFilter }
+    }
+
+    // Study sessions only (Swipe-to-Revise ratings have 0 minutes), for the filter.
+    private var sessions: [StudyProgress] {
+        progressEntries.filter { entry in
+            guard entry.minutesSpent > 0 else { return false }
+            guard let subjectFilter else { return true }
+            return entry.topic?.subject?.id == subjectFilter
+        }
+    }
 
     private var overallProgress: Int {
         guard !subjects.isEmpty else { return 0 }
@@ -23,215 +48,204 @@ struct ProgressDashboardView: View {
         return Int(avg * 100)
     }
 
-    private var totalMinutesThisWeek: Int {
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .now
-        return progressEntries
-            .filter { $0.date >= weekAgo }
-            .reduce(0) { $0 + $1.minutesSpent }
+    private func minutes(from start: Date, to end: Date) -> Int {
+        sessions.filter { $0.date >= start && $0.date < end }.reduce(0) { $0 + $1.minutesSpent }
     }
 
-    private var activeTopicsCount: Int {
-        subjects.flatMap(\.topics).filter { $0.progress > 0 && !$0.isCompleted }.count
+    private var thisWeekStart: Date {
+        calendar.startOfDay(for: calendar.date(byAdding: .day, value: -6, to: .now) ?? .now)
     }
 
-    private var weeklyActivity: [DailyStudy] {
-        let calendar = Calendar.current
-        let start = calendar.startOfDay(
-            for: calendar.date(byAdding: .day, value: -6, to: .now) ?? .now
-        )
+    private var minutesThisWeek: Int {
+        minutes(from: thisWeekStart, to: .now.addingTimeInterval(1))
+    }
 
-        return (0..<7).compactMap { offset in
-            guard let date = calendar.date(byAdding: .day, value: offset, to: start) else {
-                return nil
+    private var minutesLastWeek: Int {
+        let start = calendar.date(byAdding: .day, value: -7, to: thisWeekStart) ?? thisWeekStart
+        return minutes(from: start, to: thisWeekStart)
+    }
+
+    private var activeTopics: (active: Int, total: Int) {
+        let topics = subjects.flatMap(\.topics)
+        return (topics.filter { $0.progress > 0 && !$0.isCompleted }.count, topics.count)
+    }
+
+    // Week: one bar per day for the last 7 days. Month: one bar per week for the last 4 weeks.
+    private var bars: [ActivityBar] {
+        switch range {
+        case .week:
+            return (0..<7).compactMap { offset in
+                guard let day = calendar.date(byAdding: .day, value: offset, to: thisWeekStart),
+                      let next = calendar.date(byAdding: .day, value: 1, to: day) else { return nil }
+                return ActivityBar(start: day, label: day.formatted(.dateTime.weekday(.abbreviated)), minutes: minutes(from: day, to: next))
             }
-
-            let minutes = progressEntries
-                .filter { calendar.isDate($0.date, inSameDayAs: date) }
-                .reduce(0) { $0 + $1.minutesSpent }
-
-            return DailyStudy(date: date, minutes: minutes)
+        case .month:
+            return (0..<4).compactMap { offset in
+                guard let start = calendar.date(byAdding: .day, value: -7 * (3 - offset), to: thisWeekStart),
+                      let end = calendar.date(byAdding: .day, value: 7, to: start) else { return nil }
+                return ActivityBar(start: start, label: start.formatted(.dateTime.day().month(.abbreviated)), minutes: minutes(from: start, to: end))
+            }
         }
     }
 
+    private var rangeTotal: Int { bars.reduce(0) { $0 + $1.minutes } }
+
+    private func hoursAndMinutes(_ total: Int) -> String {
+        total >= 60 ? "\(total / 60)h \(total % 60)m" : "\(total)m"
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                overviewCard
+            VStack(alignment: .leading, spacing: 22) {
+                Text("Your study overview")
+                    .font(.sgSubheadline)
+                    .foregroundStyle(.secondary)
 
-                sectionHeader("Subject Progress")
-                subjectProgress
+                AdaptiveStack(horizontalAlignment: .center, spacing: 10) {
+                    StatBox(value: "\(overallProgress)%", label: "Overall", color: .red)
+                    StatBox(value: hoursAndMinutes(minutesThisWeek), label: "This Week", color: .blue)
+                    StatBox(value: "\(activeTopics.active)/\(activeTopics.total)", label: "Active", color: .green)
+                }
 
-                sectionHeader("Study Activity")
-                activityChart
+                sectionHeader("By Subject")
+                bySubjectCard
 
-                sectionHeader("Progress Breakdown")
-                progressBars
+                HStack {
+                    sectionHeader("Study Activity")
+                    Spacer()
+                    PillPicker(selection: $range, options: [(.week, "Week"), (.month, "Month")])
+                        .frame(width: 150)
+                }
+                activityCard
             }
             .padding(.horizontal)
             .padding(.bottom, 28)
         }
         .background(Color.appBackground)
+        .tabBarClearance()   // keeps the last item clear of the tab bar
         .navigationTitle("Progress")
     }
 
-    private var overviewCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("YOUR PROGRESS")
-                .font(.spaceGrotesk(size: 12, weight: .bold))
-                .foregroundStyle(.red)
+    // MARK: - By subject
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(overallProgress)")
-                    .font(.spaceGrotesk(size: 52, weight: .bold))
-                Text("%")
-                    .font(.spaceGrotesk(size: 24, weight: .semibold))
-                    .foregroundStyle(.secondary)
-            }
-
-            Text("Keep building consistent study habits across your subjects.")
-                .font(.sgSubheadline)
-                .foregroundStyle(.secondary)
-
-            ProgressView(value: Double(overallProgress) / 100)
-                .tint(.red)
-                .scaleEffect(x: 1, y: 2, anchor: .center)
-
-            AdaptiveStack(horizontalAlignment: .leading, spacing: dynamicTypeSize.isAccessibilitySize ? 12 : 0) {
-                metric(value: "\(totalMinutesThisWeek / 60)h \(totalMinutesThisWeek % 60)m", label: "This week")
-                if !dynamicTypeSize.isAccessibilitySize { Divider() }
-                metric(value: "\(activeTopicsCount)", label: "Active topics")
-                if !dynamicTypeSize.isAccessibilitySize { Divider() }
-                metric(value: "\(subjects.count)", label: "Subjects")
-            }
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(20)
-        .background(
-            LinearGradient(
-                colors: [.red.opacity(0.25), Color.cardFill],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .padding(.top, 8)
-    }
-
-    private var subjectProgress: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
-                ForEach(subjects) { subject in
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: subject.iconName)
-                                .foregroundStyle(Color(hex: subject.colorHex))
-                            Spacer()
-                            Text("\(Int(subject.progress * 100))%")
-                                .font(.spaceGrotesk(size: 18, weight: .bold))
-                        }
-
-                        Text(subject.name)
-                            .font(.spaceGrotesk(size: 15, weight: .semibold))
-                            .lineLimit(1)
-
-                        ProgressView(value: subject.progress)
-                            .tint(Color(hex: subject.colorHex))
+    private var bySubjectCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    filterChip("All", isSelected: subjectFilter == nil) { subjectFilter = nil }
+                    ForEach(subjects) { subject in
+                        filterChip(subject.name, isSelected: subjectFilter == subject.id) { subjectFilter = subject.id }
                     }
-                    .padding(16)
-                    .frame(width: subjectCardWidth, alignment: .leading)
-                    .background(Color.cardFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
-            }
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private var activityChart: some View {
-        Chart(weeklyActivity) { day in
-            BarMark(
-                x: .value("Day", day.date, unit: .day),
-                y: .value("Minutes", day.minutes)
-            )
-            .foregroundStyle(.red.gradient)
-            .cornerRadius(5)
-        }
-        .chartYAxis {
-            AxisMarks(position: .leading) {
-                AxisGridLine()
-                AxisValueLabel()
-            }
-        }
-        .chartXAxis {
-            AxisMarks(values: .stride(by: .day)) { value in
-                AxisValueLabel(format: .dateTime.weekday(.abbreviated))
-            }
-        }
-        .frame(height: chartHeight)
-        .padding(14)
-        .background(Color.cardFill)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var progressBars: some View {
-        VStack(spacing: 14) {
-            ForEach(subjects) { subject in
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(subject.name)
-                            .font(.spaceGrotesk(size: 14, weight: .semibold))
-                        Spacer(minLength: 8)
-                        Text("\(Int(subject.progress * 100))%")
-                            .font(.spaceGrotesk(size: 14, weight: .bold))
-                    }
-
-                    GeometryReader { proxy in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.primary.opacity(0.10))
-                            Capsule()
-                                .fill(Color(hex: subject.colorHex))
-                                .frame(width: proxy.size.width * subject.progress)
-                        }
-                    }
-                    .frame(height: 9)
                 }
             }
 
-            if subjects.isEmpty {
+            if visibleSubjects.isEmpty {
                 Text("Add a subject to start tracking progress.")
                     .font(.sgCaption)
                     .foregroundStyle(.secondary)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 18) {
+                    ForEach(visibleSubjects) { subject in
+                        VStack(spacing: 6) {
+                            ProgressRing(progress: subject.progress, color: Color(hex: subject.colorHex), lineWidth: 6)
+                                .frame(width: ringSize, height: ringSize)
+                            Text(subject.name)
+                                .font(.spaceGrotesk(size: 12, weight: .bold))
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2)
+                            if let deadline = subject.nextDeadline {
+                                Text(deadline.shortDueLabel)
+                                    .font(.sgCaption2)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                        .accessibilityElement(children: .combine)
+                    }
+                }
             }
         }
         .padding(16)
-        .background(Color.cardFill)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .cardStyle()
+    }
+
+    private func filterChip(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) { action() }
+        } label: {
+            Text(title)
+                .font(.spaceGrotesk(size: 12, weight: .semibold))
+                .lineLimit(1)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(isSelected ? Color.red : Color.primary.opacity(0.08), in: Capsule())
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    // MARK: - Study activity
+
+    private var activityCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            AdaptiveStack(verticalAlignment: .firstTextBaseline, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(hoursAndMinutes(rangeTotal))
+                        .font(.spaceGrotesk(size: 28, weight: .bold, relativeTo: .title))
+                    Text(range == .week ? "this week" : "last 4 weeks")
+                        .font(.sgCaption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                if range == .week, let change = weekChangeText {
+                    Text(change.text)
+                        .font(.spaceGrotesk(size: 12, weight: .bold))
+                        .foregroundStyle(change.isUp ? Color.green : Color.orange)
+                }
+            }
+
+            Chart(bars) { bar in
+                BarMark(
+                    x: .value("Period", bar.label),
+                    y: .value("Minutes", bar.minutes)
+                )
+                .foregroundStyle(Color.red.gradient)
+                .cornerRadius(4)
+                .annotation(position: .top, spacing: 4) {
+                    if bar.minutes > 0 {
+                        Text("\(bar.minutes)m")
+                            .font(.spaceGrotesk(size: 10, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .chartYAxis(.hidden)
+            .frame(height: chartHeight)
+            .accessibilityLabel(range == .week ? "Minutes studied each day this week" : "Minutes studied each week")
+        }
+        .padding(16)
+        .cardStyle()
+    }
+
+    // "↑ 23% vs last week"
+    private var weekChangeText: (text: String, isUp: Bool)? {
+        guard minutesLastWeek > 0 else { return nil }
+        let change = Double(minutesThisWeek - minutesLastWeek) / Double(minutesLastWeek) * 100
+        let rounded = Int(change.rounded())
+        return (rounded >= 0 ? "↑ \(rounded)% vs last week" : "↓ \(-rounded)% vs last week", rounded >= 0)
     }
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.spaceGrotesk(size: 20, weight: .bold))
-            .padding(.top, 2)
-    }
-
-    private func metric(value: String, label: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.spaceGrotesk(size: 19, weight: .bold))
-            Text(label)
-                .font(.sgCaption2)
-                .foregroundStyle(.secondary)
-        }
-        .frame(
-            maxWidth: .infinity,
-            alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .center
-        )
+            .font(.spaceGrotesk(size: 20, weight: .bold, relativeTo: .title3))
     }
 }
 
-private struct DailyStudy: Identifiable {
-    let date: Date
+private struct ActivityBar: Identifiable {
+    let start: Date
+    let label: String
     let minutes: Int
-    var id: Date { date }
+    var id: Date { start }
 }

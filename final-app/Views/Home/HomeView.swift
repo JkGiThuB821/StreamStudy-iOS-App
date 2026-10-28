@@ -18,11 +18,10 @@ struct HomeView: View {
     @Query private var subjects: [Subject]
 
     // Card sizes grow with Dynamic Type so larger text still fits.
-    @ScaledMetric(relativeTo: .subheadline) private var topicCardWidth: CGFloat = 150
-    @ScaledMetric(relativeTo: .subheadline) private var topicCardHeight: CGFloat = 110
-    @ScaledMetric(relativeTo: .subheadline) private var deadlineCardWidth: CGFloat = 140
-    @ScaledMetric(relativeTo: .subheadline) private var quickWinWidth: CGFloat = 130
-    @ScaledMetric(relativeTo: .subheadline) private var quickWinHeight: CGFloat = 100
+    @ScaledMetric(relativeTo: .subheadline) private var cardWidth: CGFloat = 150
+    @ScaledMetric(relativeTo: .subheadline) private var cardHeight: CGFloat = 160
+    @ScaledMetric(relativeTo: .subheadline) private var quickWinWidth: CGFloat = 140
+    @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 36
 
     private var allTopics: [Topic] { subjects.flatMap(\.topics) }
 
@@ -65,17 +64,22 @@ struct HomeView: View {
         return "Hi, \(firstName)"
     }
 
+    private var initials: String {
+        let source = authManager.displayName ?? authManager.userEmail ?? "S"
+        let letters = source.split(separator: " ").prefix(2).compactMap(\.first)
+        return String(letters).uppercased()
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(greeting)
-                        .font(.spaceGrotesk(size: 22, weight: .bold))
-                    Text("Here's what to study next.")
-                        .font(.sgSubheadline)
-                        .foregroundStyle(.secondary)
+                header
+                    .padding(.horizontal)
+
+                if let topPick = ranked.first {
+                    nextWatchCard(for: topPick)
+                        .padding(.horizontal)
                 }
-                .padding(.horizontal)
 
                 if let digest = currentDigest {
                     WeeklyDigestCard(
@@ -86,10 +90,6 @@ struct HomeView: View {
                         showingDigest = true
                     }
                     .padding(.horizontal)
-                }
-
-                if let topPick = ranked.first {
-                    nextWatchCard(for: topPick)
                 }
 
                 if !continueLearning.isEmpty {
@@ -120,7 +120,9 @@ struct HomeView: View {
             .padding(.vertical)
         }
         .background(Color.appBackground)
+        .tabBarClearance()   // keeps the last item clear of the tab bar
         .navigationTitle("Home")
+        .toolbar(.hidden, for: .navigationBar)   // custom header instead, as in the mock-up
         .navigationDestination(for: Topic.self) { TopicDetailView(topic: $0) }
         .sheet(isPresented: $showingDigest) {
             if let digest = currentDigest {
@@ -138,83 +140,111 @@ struct HomeView: View {
         deepLinkRouter.clear()
     }
 
-    private func nextWatchCard(for recommendation: TopicRecommendation) -> some View {
-        let topic = recommendation.topic
-        let resource = recommendation.nextResource
+    // MARK: - Header
 
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("YOUR NEXT WATCH")
-                .font(.spaceGrotesk(size: 16, weight: .bold))
-                .foregroundStyle(.red)
-                .padding(.horizontal)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(topic.subject?.name ?? "")
-                    .font(.spaceGrotesk(size: 16, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Text(resource?.title ?? topic.title)
-                    .font(.spaceGrotesk(size: 20, weight: .bold))
-                if let resource {
-                    Text("\(topic.title) Â· \(resource.durationMinutes) min")
-                        .font(.sgSubheadline)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(topic.title)
-                        .font(.sgSubheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                AdaptiveStack(spacing: 8) {
-                    Button {
-                        if let urlString = resource?.urlString, let url = URL(string: urlString) {
-                            openURL(url)
-                        }
-                    } label: {
-                        Label("Continue", systemImage: "play.fill")
-                            .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(Color.primary)
-                            .foregroundStyle(Color.appBackground)
-                            .clipShape(Capsule())
-                    }
-                    .disabled(resource == nil)
-
-                    NavigationLink(value: topic) {
-                        Label("More Info", systemImage: "info.circle")
-                            .padding(.horizontal, 14).padding(.vertical, 8)
-                            .background(Color.primary.opacity(0.12))
-                            .foregroundStyle(Color.primary)
-                            .clipShape(Capsule())
-                    }
-                }
-                .font(.spaceGrotesk(size: 15, weight: .bold))
-                .padding(.top, 4)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("StreamStudy")
+                    .font(.spaceGrotesk(size: 24, weight: .bold, relativeTo: .title2))
+                    .foregroundStyle(.red)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                Text(initials)
+                    .font(.spaceGrotesk(size: 13, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: avatarSize, height: avatarSize)
+                    .background(Color.red, in: Circle())
+                    .accessibilityLabel("Signed in as \(authManager.displayName ?? authManager.userEmail ?? "you")")
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                LinearGradient(colors: [.red.opacity(0.4), Color.appBackground], startPoint: .top, endPoint: .bottom)
-            )
-            .foregroundStyle(.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
-            .padding(.horizontal)
+            Text(greeting)
+                .font(.sgHeadline)
+            Text("Here's what to study next.")
+                .font(.sgSubheadline)
+                .foregroundStyle(.secondary)
         }
     }
 
-    private func sectionRow(title: String, badge: String?, recommendations: [TopicRecommendation]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(title).font(.sgHeadline)
-                if let badge {
-                    Text(badge)
-                        .font(.spaceGrotesk(size: 11, weight: .bold))
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(.red)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
+    // MARK: - Hero
+
+    private func nextWatchCard(for recommendation: TopicRecommendation) -> some View {
+        let topic = recommendation.topic
+        let resource = recommendation.nextResource
+        let subjectColor = Color(hex: topic.subject?.colorHex ?? "#E50914")
+        let deadline = topic.subject?.nextDeadline
+
+        return VStack(alignment: .leading, spacing: 10) {
+            BadgeLabel(text: "Your Next Watch")
+
+            Text(topic.title)
+                .font(.spaceGrotesk(size: 24, weight: .bold, relativeTo: .title2))
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(resource.map { "\($0.title) · \($0.durationMinutes) min" } ?? (topic.subject?.name ?? ""))
+                .font(.sgSubheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            HStack(spacing: 8) {
+                ProgressView(value: topic.progress)
+                    .tint(.red)
+                Text("\(Int(topic.progress * 100))%")
+                    .font(.spaceGrotesk(size: 12, weight: .bold))
+                if let deadline {
+                    Text("· \(deadline.shortDueLabel)")
+                        .font(.spaceGrotesk(size: 12, weight: .bold))
+                        .foregroundStyle(.red)
                 }
             }
-            .padding(.horizontal)
+
+            AdaptiveStack(spacing: 10) {
+                Button {
+                    if let urlString = resource?.urlString, let url = URL(string: urlString) {
+                        openURL(url)
+                    }
+                } label: {
+                    Label("Continue", systemImage: "play.fill")
+                        .padding(.horizontal, 18).padding(.vertical, 10)
+                        .background(Color.primary, in: RoundedRectangle(cornerRadius: 6))
+                        .foregroundStyle(Color.appBackground)
+                }
+                .disabled(resource == nil)
+
+                NavigationLink(value: topic) {
+                    Text("More Info")
+                        .padding(.horizontal, 18).padding(.vertical, 10)
+                        .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.4)))
+                        .foregroundStyle(Color.primary)
+                }
+            }
+            .font(.spaceGrotesk(size: 15, weight: .bold))
+            .padding(.top, 4)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [subjectColor.opacity(0.45), Color.cardFill], startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 14)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.cardStroke))
+    }
+
+    // MARK: - Rows
+
+    private func rowTitle(_ title: String, badge: String?) -> some View {
+        HStack(spacing: 8) {
+            Text(title).font(.spaceGrotesk(size: 18, weight: .bold, relativeTo: .headline))
+            if let badge {
+                BadgeLabel(text: badge)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private func sectionRow(title: String, badge: String?, recommendations: [TopicRecommendation]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            rowTitle(title, badge: badge)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -228,26 +258,38 @@ struct HomeView: View {
     }
 
     private var dueSoonRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Due Soon").font(.sgHeadline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: 12) {
+            rowTitle("Due Soon", badge: nil)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(upcomingDeadlines.prefix(5)) { deadline in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("DEADLINE")
-                                .font(.spaceGrotesk(size: 11, weight: .bold))
-                                .foregroundStyle(.red)
-                            Text(deadline.subject?.name ?? deadline.title)
-                                .font(.sgSubheadline)
-                                .lineLimit(1)
-                            Text(deadline.daysRemaining == 1 ? "1 day" : "\(deadline.daysRemaining) days")
+                        let subject = deadline.subject
+                        VStack(alignment: .leading, spacing: 8) {
+                            BadgeLabel(text: "Deadline", color: deadline.priority.color == .yellow ? .orange : deadline.priority.color)
+                            Spacer(minLength: 0)
+                            Image(systemName: subject?.iconName ?? "calendar")
+                                .font(.title2)
+                                .foregroundStyle(Color(hex: subject?.colorHex ?? "#E50914"))
+                            if let subject {
+                                ProgressView(value: subject.progress)
+                                    .tint(Color(hex: subject.colorHex))
+                                Text("\(Int(subject.progress * 100))% complete")
+                                    .font(.sgCaption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text(deadline.title)
+                                .font(.spaceGrotesk(size: 14, weight: .bold))
+                                .lineLimit(2)
+                            Text(daysLabel(deadline))
                                 .font(.sgCaption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.red)
                         }
-                        .padding()
-                        .frame(width: deadlineCardWidth, alignment: .leading)
-                        .background(Color.cardFill)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(12)
+                        .frame(width: cardWidth, alignment: .leading)
+                        .frame(minHeight: cardHeight, alignment: .topLeading)
+                        .background(Color(hex: subject?.colorHex ?? "#333333").opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
                     }
                 }
                 .padding(.horizontal)
@@ -256,25 +298,24 @@ struct HomeView: View {
     }
 
     private var quickWinsRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Quick Wins").font(.sgHeadline).padding(.horizontal)
+        VStack(alignment: .leading, spacing: 12) {
+            rowTitle("Quick Wins", badge: nil)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(quickWins.prefix(8)) { resource in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 6) {
                             Image(systemName: resource.type.sfSymbol).foregroundStyle(.red)
                             Text(resource.title)
-                                .font(.sgSubheadline)
+                                .font(.spaceGrotesk(size: 14, weight: .semibold))
                                 .lineLimit(2)
                             Text("\(resource.durationMinutes) min")
                                 .font(.sgCaption)
                                 .foregroundStyle(.secondary)
                         }
-                        .padding()
+                        .padding(12)
                         .frame(width: quickWinWidth, alignment: .leading)
-                        .frame(minHeight: quickWinHeight, alignment: .topLeading)
-                        .background(Color.cardFill)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .frame(minHeight: 100, alignment: .topLeading)
+                        .cardStyle(cornerRadius: 12)
                     }
                 }
                 .padding(.horizontal)
@@ -283,24 +324,42 @@ struct HomeView: View {
     }
 
     private func topicCard(_ topic: Topic) -> some View {
-        NavigationLink(value: topic) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(topic.subject?.name ?? "")
+        let color = Color(hex: topic.subject?.colorHex ?? "#333333")
+
+        return NavigationLink(value: topic) {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: topic.subject?.iconName ?? "book.closed.fill")
+                    .font(.title2)
+                    .foregroundStyle(color)
+                Spacer(minLength: 0)
+                ProgressView(value: topic.progress)
+                    .tint(color)
+                Text("\(Int(topic.progress * 100))% complete")
                     .font(.sgCaption2)
                     .foregroundStyle(.secondary)
                 Text(topic.title)
-                    .font(.sgSubheadline)
+                    .font(.spaceGrotesk(size: 14, weight: .bold))
                     .lineLimit(2)
-                ProgressView(value: topic.progress)
-                    .tint(.red)
+                Text(topic.subject?.name ?? "")
+                    .font(.sgCaption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-            .padding(10)
-            .frame(width: topicCardWidth, alignment: .leading)
-            .frame(minHeight: topicCardHeight, alignment: .bottomLeading)
-            .background(Color(hex: topic.subject?.colorHex ?? "#333333").opacity(0.5))
+            .padding(12)
+            .frame(width: cardWidth, alignment: .leading)
+            .frame(minHeight: cardHeight, alignment: .topLeading)
+            .background(color.opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
             .foregroundStyle(.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
+    }
+
+    private func daysLabel(_ deadline: Deadline) -> String {
+        switch deadline.daysRemaining {
+        case ...0: return "Due today"
+        case 1: return "Due tomorrow"
+        default: return "In \(deadline.daysRemaining) days"
+        }
     }
 }

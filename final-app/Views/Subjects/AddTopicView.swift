@@ -23,6 +23,7 @@ struct AddTopicView: View {
             Form {
                 Section("New Topic") {
                     TextField("Topic title (e.g. SwiftData Relationships)", text: $title)
+                        .characterLimit($title, TextLimits.title)
                 }
 
                 Section {
@@ -32,19 +33,23 @@ struct AddTopicView: View {
                         axis: .vertical
                     )
                     .lineLimit(3...6)
+                    .characterLimit($description, TextLimits.longDescription)
                 } header: {
-                    Text("What do you need to learn?")
-                } footer: {
-                    Text("Be specific. The description is used to find relevant videos, articles and docs, and to build your step-by-step lesson plan.")
+                    InfoHeader(
+                        title: "What do you need to learn?",
+                        info: "Be specific. The description is used to find relevant videos, articles and docs, and to build your step-by-step lesson plan."
+                    )
                 }
 
                 Section {
                     TextField("e.g. swift, swiftui, ios, algorithms", text: $searchTag)
                         .textInputAutocapitalization(.never)
+                        .characterLimit($searchTag, TextLimits.tag)
                 } header: {
-                    Text("Search tag (optional)")
-                } footer: {
-                    Text("Used to find dev.to articles and curated docs for this topic. Leave blank to guess one from the title.")
+                    InfoHeader(
+                        title: "Search tag (optional)",
+                        info: "Used to find dev.to articles and curated docs for this topic. Leave blank to guess one from the title."
+                    )
                 }
             }
             .font(.sgBody)
@@ -55,7 +60,7 @@ struct AddTopicView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") { addTopic() }
-                        .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .disabled(title.isBlank)
                 }
             }
         }
@@ -63,13 +68,14 @@ struct AddTopicView: View {
 
     private func addTopic() {
         let topic = Topic(
-            title: title,
-            topicDescription: description,
+            title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+            topicDescription: description.trimmingCharacters(in: .whitespacesAndNewlines),
             orderIndex: subject.topics.count,
-            searchTag: searchTag
+            searchTag: searchTag.trimmingCharacters(in: .whitespaces)
         )
         topic.subject = subject
         modelContext.insert(topic)
         dismiss()
     }
 }
+

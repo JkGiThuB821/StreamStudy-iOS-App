@@ -54,6 +54,14 @@ enum SignalPipeline {
             .sorted { $0.date > $1.date }
     }
 
+    // The latest rating given while studying one particular resource.
+    static func latestRating(for resource: LearningResource) -> DifficultyRating {
+        resource.topic?.progressEntries
+            .filter { $0.isRating && $0.resourceID == resource.id }
+            .max { $0.date < $1.date }?
+            .understanding ?? .notRated
+    }
+
     // 0 (needs revision) ... 1 (understood), weighting recent ratings most.
     // nil when the student hasn't rated the topic yet.
     static func confidence(for topic: Topic) -> Double? {

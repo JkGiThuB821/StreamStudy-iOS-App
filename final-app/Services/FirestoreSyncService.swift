@@ -67,6 +67,27 @@ final class FirestoreSyncService: ObservableObject {
         }
     }
 
+    // MARK: - Onboarding flag (Week 11 feedback: onboarding should not be repeated)
+
+    // True when this account has finished onboarding on any device. Accounts
+    // created before the flag existed count as onboarded if they have subjects.
+    func hasCompletedOnboarding(uid: String) async -> Bool {
+        let user = db.collection("users").document(uid)
+        do {
+            let document = try await user.getDocument(source: .server)
+            if document.data()?["onboardingComplete"] as? Bool == true { return true }
+            let subjects = try await user.collection("subjects").limit(to: 1).getDocuments(source: .server)
+            return !subjects.isEmpty
+        } catch {
+            return false
+        }
+    }
+
+    // Not awaited: when offline, Firestore queues the write and sends it later.
+    func markOnboardingComplete(uid: String) {
+        db.collection("users").document(uid).setData(["onboardingComplete": true], merge: true)
+    }
+
     // MARK: - Pull (Firestore -> local), called on launch / sign-in
 
     func pull(uid: String, modelContext: ModelContext) async {
@@ -130,6 +151,7 @@ final class FirestoreSyncService: ObservableObject {
                 resource.aiTagsRaw = dto.aiTags ?? ""
                 resource.relevanceScore = dto.relevanceScore
                 resource.tagSourceRaw = dto.tagSource
+                resource.notes = dto.notes ?? ""
                 resource.topic = topic
                 modelContext.insert(resource)
             }

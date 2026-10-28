@@ -58,6 +58,9 @@ final class LearningResource {
     var relevanceScore: Double? = nil   // 0...1: how closely this matches its topic
     var tagSourceRaw: String? = nil     // "gemini" or "metadata"; nil = not tagged yet
 
+    // The student's own notes on this resource (Resource Detail screen).
+    var notes: String = ""
+
     var topic: Topic?
     
     init(

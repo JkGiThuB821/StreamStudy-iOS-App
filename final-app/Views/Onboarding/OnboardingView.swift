@@ -19,6 +19,7 @@ struct OnboardingView: View {
 
     @AppStorage(AppAppearance.storageKey) private var appearance: AppAppearance = .system
     @AppStorage(UserPreferences.onboardedUserIDsKey) private var onboardedUserIDs = ""
+    @AppStorage(UserPreferences.replayOnboardingKey) private var replayOnboarding = false
     @AppStorage(NotificationService.remindersEnabledKey) private var remindersEnabled = true
 
     @State private var step: Step = .welcome
@@ -97,6 +98,7 @@ struct OnboardingView: View {
             stepHeader("What should we call you?", detail: "Shown on your Home screen and profile.")
 
             TextField("Display name", text: $name)
+                .characterLimit($name, TextLimits.name)
                 .textContentType(.name)
                 .textInputAutocapitalization(.words)
                 .padding()
@@ -120,6 +122,7 @@ struct OnboardingView: View {
 
             HStack {
                 TextField("Add your own subject", text: $customSubjectDraft)
+                    .characterLimit($customSubjectDraft, TextLimits.name)
                     .textInputAutocapitalization(.words)
                     .onSubmit(addCustomSubject)
                 Button("Add", action: addCustomSubject)
@@ -281,7 +284,10 @@ struct OnboardingView: View {
             if network.isConnected {
                 await syncService.push(uid: uid, modelContext: modelContext)
             }
+            // Saved to the account too, so it isn't repeated on another device.
+            syncService.markOnboardingComplete(uid: uid)
             onboardedUserIDs = UserPreferences.adding(uid, to: onboardedUserIDs)
+            replayOnboarding = false
             isFinishing = false
         }
     }
