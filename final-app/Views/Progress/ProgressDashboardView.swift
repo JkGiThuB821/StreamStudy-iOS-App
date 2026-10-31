@@ -193,6 +193,7 @@ struct ProgressDashboardView: View {
                 .lineLimit(1)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
+                .expandedTapArea(.vertical, by: 8)
                 .background(isSelected ? Color.red : Color.primary.opacity(0.08), in: Capsule())
                 .foregroundStyle(isSelected ? Color.white : Color.primary)
         }

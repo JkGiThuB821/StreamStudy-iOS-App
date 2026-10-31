@@ -148,6 +148,7 @@ struct SwipeToReviseCard<Content: View>: View {
                 .font(.spaceGrotesk(size: 13, weight: .bold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
+                .frame(minHeight: 44)
                 .foregroundStyle(isCurrent ? color : Color.secondary)
                 .background(isCurrent ? color.opacity(0.15) : Color.clear)
         }

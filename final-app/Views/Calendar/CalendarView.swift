@@ -87,6 +87,7 @@ struct CalendarView: View {
             Image(systemName: systemImage)
                 .font(.footnote.bold())
                 .frame(width: monthButtonSize, height: monthButtonSize)
+                .expandedTapArea(by: 6)   // 44pt hit target
                 .cardStyle(cornerRadius: 8)
         }
         .buttonStyle(.plain)

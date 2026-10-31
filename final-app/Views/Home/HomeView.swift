@@ -205,6 +205,7 @@ struct HomeView: View {
                 } label: {
                     Label("Continue", systemImage: "play.fill")
                         .padding(.horizontal, 18).padding(.vertical, 10)
+                        .frame(minHeight: 44)
                         .background(Color.primary, in: RoundedRectangle(cornerRadius: 6))
                         .foregroundStyle(Color.appBackground)
                 }
@@ -213,6 +214,7 @@ struct HomeView: View {
                 NavigationLink(value: topic) {
                     Text("More Info")
                         .padding(.horizontal, 18).padding(.vertical, 10)
+                        .frame(minHeight: 44)
                         .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.4)))
                         .foregroundStyle(Color.primary)

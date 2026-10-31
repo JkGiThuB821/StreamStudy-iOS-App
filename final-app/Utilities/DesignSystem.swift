@@ -29,6 +29,19 @@ extension View {
     }
 }
 
+// MARK: - Touch targets
+
+extension View {
+    // HIG: controls need a hit target of at least 44×44 pt. This grows the
+    // tappable area around a small control without changing how it looks or
+    // how much space it takes up in the layout.
+    func expandedTapArea(_ edges: Edge.Set = .all, by amount: CGFloat = 10) -> some View {
+        padding(edges, amount)
+            .contentShape(Rectangle())
+            .padding(edges, -amount)
+    }
+}
+
 // MARK: - Stat box
 
 // A bordered box with a large coloured number and a small caption.
@@ -149,6 +162,7 @@ struct PillPicker<Value: Hashable>: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(selection == value ? Color.red : Color.clear, in: RoundedRectangle(cornerRadius: 8))
+                        .expandedTapArea(.vertical, by: 4)
                         .foregroundStyle(selection == value ? Color.white : Color.secondary)
                 }
                 .buttonStyle(.plain)

@@ -134,6 +134,7 @@ private struct StoryRecapView: View {
                         .font(.headline)
                         .padding(8)
                         .background(.white.opacity(0.15), in: Circle())
+                        .expandedTapArea(by: 6)
                 }
                 .accessibilityLabel("Close recap")
             }

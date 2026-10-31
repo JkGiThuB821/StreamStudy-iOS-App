@@ -268,6 +268,7 @@ struct TopicDetailView: View {
                     } label: {
                         Image(systemName: resource.isSaved ? "bookmark.fill" : "bookmark")
                             .foregroundStyle(resource.isSaved ? Color.red : Color.secondary)
+                            .expandedTapArea(by: 10)
                     }
                     .accessibilityLabel(resource.isSaved ? "Remove from saved" : "Save for later")
 
@@ -278,6 +279,7 @@ struct TopicDetailView: View {
                     } label: {
                         Image(systemName: resource.isCompleted ? "checkmark.circle.fill" : "circle")
                             .foregroundStyle(resource.isCompleted ? Color.green : Color.secondary)
+                            .expandedTapArea(by: 10)
                     }
                     .accessibilityLabel(resource.isCompleted ? "Mark as not complete" : "Mark as complete")
                 }
