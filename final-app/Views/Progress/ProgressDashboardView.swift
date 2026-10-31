@@ -18,6 +18,8 @@ struct ProgressDashboardView: View {
 
     @State private var subjectFilter: UUID?          // nil = All
     @State private var range: ActivityRange = .week
+    // The bar being touched (tap or drag across the chart); nil when not touching.
+    @State private var selectedPeriod: String?
 
     @ScaledMetric(relativeTo: .caption) private var chartHeight: CGFloat = 190
     @ScaledMetric(relativeTo: .subheadline) private var ringSize: CGFloat = 64
@@ -89,6 +91,18 @@ struct ProgressDashboardView: View {
     }
 
     private var rangeTotal: Int { bars.reduce(0) { $0 + $1.minutes } }
+
+    private var selectedBar: ActivityBar? {
+        bars.first { $0.label == selectedPeriod }
+    }
+
+    // "Wed 28 Oct" for a day, "Week of 5 Oct" for a week.
+    private func periodTitle(_ bar: ActivityBar) -> String {
+        switch range {
+        case .week: return bar.start.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))
+        case .month: return "Week of \(bar.start.formatted(.dateTime.day().month(.abbreviated)))"
+        }
+    }
 
     private func hoursAndMinutes(_ total: Int) -> String {
         total >= 60 ? "\(total / 60)h \(total % 60)m" : "\(total)m"
@@ -213,20 +227,56 @@ struct ProgressDashboardView: View {
                 )
                 .foregroundStyle(Color.red.gradient)
                 .cornerRadius(4)
+                // While a bar is selected, the others fade so it stands out.
+                .opacity(selectedBar == nil || selectedBar?.id == bar.id ? 1 : 0.35)
                 .annotation(position: .top, spacing: 4) {
-                    if bar.minutes > 0 {
+                    if bar.minutes > 0 && selectedBar == nil {
                         Text("\(bar.minutes)m")
                             .font(.spaceGrotesk(size: 10, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
                 }
+
+                // Tap or drag across the chart: a guide line and a callout with the details.
+                if let selectedBar, selectedBar.id == bar.id {
+                    RuleMark(x: .value("Period", selectedBar.label))
+                        .foregroundStyle(Color.primary.opacity(0.2))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                        .annotation(
+                            position: .top,
+                            spacing: 0,
+                            overflowResolution: .init(x: .fit(to: .chart), y: .disabled)
+                        ) {
+                            selectionCallout(selectedBar)
+                        }
+                }
             }
+            .chartXSelection(value: $selectedPeriod)
             .chartYAxis(.hidden)
             .frame(height: chartHeight)
             .accessibilityLabel(range == .week ? "Minutes studied each day this week" : "Minutes studied each week")
+            .onChange(of: range) { selectedPeriod = nil }
+
+            Text("Tap or drag across the chart to see each \(range == .week ? "day" : "week").")
+                .font(.sgCaption2)
+                .foregroundStyle(.secondary)
         }
         .padding(16)
         .cardStyle()
+    }
+
+    private func selectionCallout(_ bar: ActivityBar) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(periodTitle(bar))
+                .font(.sgCaption2)
+                .foregroundStyle(.secondary)
+            Text(bar.minutes == 0 ? "No study" : hoursAndMinutes(bar.minutes))
+                .font(.spaceGrotesk(size: 15, weight: .bold))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.appBackground, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.cardStroke))
     }
 
     // "↑ 23% vs last week"
