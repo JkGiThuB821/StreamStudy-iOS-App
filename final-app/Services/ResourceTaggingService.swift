@@ -14,6 +14,7 @@ import Foundation
 // It is a background enrichment step and never a dependency: callers don't
 // wait on it, and if Gemini is unavailable, slow or returns bad data, resources
 // are tagged from their own metadata instead.
+@MainActor
 enum ResourceTaggingService {
 
     enum TagSource: String {

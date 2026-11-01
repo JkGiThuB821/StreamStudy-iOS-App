@@ -17,6 +17,7 @@ struct SearchPlan {
     var usedAI: Bool
 }
 
+@MainActor
 enum SearchPlanner {
 
     // MARK: - Plan

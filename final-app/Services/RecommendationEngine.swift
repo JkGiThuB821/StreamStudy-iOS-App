@@ -14,6 +14,7 @@ struct TopicRecommendation: Identifiable {
     let nextResource: LearningResource?
 }
 
+@MainActor
 enum RecommendationEngine {
     struct Weights {
         var deadlineProximity: Double = 0.5

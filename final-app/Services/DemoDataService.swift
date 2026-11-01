@@ -15,6 +15,7 @@ import SwiftData
 //
 // Best loaded on a separate demo account. Subjects that already exist (by
 // name) are skipped, so loading twice doesn't duplicate anything.
+@MainActor
 enum DemoDataService {
 
     private struct DemoResource {

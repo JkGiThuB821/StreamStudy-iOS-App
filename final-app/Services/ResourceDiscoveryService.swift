@@ -17,6 +17,7 @@ struct DiscoveryOutcome {
     var hasPartialFailure: Bool { !failureMessages.isEmpty }
 }
 
+@MainActor
 enum ResourceDiscoveryService {
 
     // How many results to keep from each source after relevance filtering.

@@ -48,6 +48,7 @@ nonisolated struct SeasonRecap: Identifiable {
     }
 }
 
+@MainActor
 enum SeasonRecapBuilder {
 
     static func build(

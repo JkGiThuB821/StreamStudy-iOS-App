@@ -10,6 +10,7 @@ import Foundation
 // Turns a topic's videos, articles and docs into an ordered, step-by-step
 // lesson plan. Gemini designs the plan as JSON when a key is configured;
 // otherwise (or if the call fails) a rule-based plan is built on-device.
+@MainActor
 enum LessonPlanService {
 
     static func generatePlan(for topic: Topic) async -> (plan: LessonPlan, warning: String?) {

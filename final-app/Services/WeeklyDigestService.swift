@@ -12,6 +12,7 @@ import SwiftData
 // the week's featured episodes from the signal pipeline and saves them as a
 // WeeklyDigest. There's no server scheduler: the app simply checks whether a
 // digest already exists for the current week.
+@MainActor
 enum WeeklyDigestService {
 
     static let maxEpisodes = 3

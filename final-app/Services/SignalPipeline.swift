@@ -12,6 +12,7 @@ import SwiftData
 // writes into, and that Home, the Weekly Digest and the Season Recap all read
 // from. Ratings, AI relevance tags and progress/deadline data all meet here,
 // then feed the existing weighted score in RecommendationEngine.
+@MainActor
 enum SignalPipeline {
 
     // Resources the AI (or fallback) judged below this aren't featured, unless
