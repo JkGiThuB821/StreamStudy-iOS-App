@@ -120,7 +120,8 @@ private struct StoryRecapView: View {
                 }
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Card \(index + 1) of \(cards.count)")
+            .accessibilityLabel("Recap progress")
+            .accessibilityValue("Card \(index + 1) of \(cards.count)")
 
             HStack {
                 Label(recap.subjectName, systemImage: recap.iconName)

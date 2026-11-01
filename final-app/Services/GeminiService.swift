@@ -45,8 +45,12 @@ enum GeminiService {
     }
 
     // Configured AND online. Callers fall back to on-device logic otherwise.
-    static var isAvailable: Bool {
-        isConfigured && NetworkMonitor.shared.isConnected
+//    static var isAvailable: Bool {
+//        isConfigured && NetworkMonitor.shared.isConnected
+//    }
+    @MainActor static var isAvailable: Bool {
+        guard isConfigured else { return false }
+        return NetworkMonitor.shared.isConnected
     }
 
     static func generateJSON<T: Decodable>(

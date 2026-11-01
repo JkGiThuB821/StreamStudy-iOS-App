@@ -23,6 +23,16 @@ struct AddSubjectView: View {
     ]
     private static let colors = ["#E50914", "#2ECC71", "#E91E8C", "#3498DB", "#9B59B6", "#F39C12"]
 
+    // Spoken names for VoiceOver.
+    private static let iconNames = [
+        "iphone": "Phone", "cpu": "Chip", "brain.head.profile": "Brain", "globe": "Globe",
+        "cylinder.split.1x2": "Database", "chevron.left.forwardslash.chevron.right": "Code", "lock.fill": "Lock",
+    ]
+    private static let colorNames = [
+        "#E50914": "Red", "#2ECC71": "Green", "#E91E8C": "Pink",
+        "#3498DB": "Blue", "#9B59B6": "Purple", "#F39C12": "Orange",
+    ]
+
     @ScaledMetric(relativeTo: .body) private var iconTileSize: CGFloat = 46
     @ScaledMetric(relativeTo: .body) private var colorSwatchSize: CGFloat = 30
 
@@ -58,7 +68,7 @@ struct AddSubjectView: View {
                                     .background(selectedIcon == icon ? Color.red : Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(icon)
+                            .accessibilityLabel("\(Self.iconNames[icon] ?? "Subject") icon")
                             .accessibilityAddTraits(selectedIcon == icon ? .isSelected : [])
                         }
                     }
@@ -77,7 +87,7 @@ struct AddSubjectView: View {
                                     .overlay(Circle().stroke(Color.primary, lineWidth: selectedColor == hex ? 2.5 : 0).padding(-3))
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel("Colour \(hex)")
+                            .accessibilityLabel("\(Self.colorNames[hex] ?? "Custom") colour")
                             .accessibilityAddTraits(selectedColor == hex ? .isSelected : [])
                         }
                     }

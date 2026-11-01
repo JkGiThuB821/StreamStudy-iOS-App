@@ -85,6 +85,7 @@ struct AddDeadlineView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(priority == option ? option.color : Color.cardStroke))
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("\(option.displayName) priority")
                         .accessibilityAddTraits(priority == option ? .isSelected : [])
                     }
                 }

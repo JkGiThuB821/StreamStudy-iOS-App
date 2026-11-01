@@ -14,6 +14,7 @@ struct SignInView: View {
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var showingPrivacyPolicy = false
 
     enum Mode { case signIn, signUp }
 
@@ -91,16 +92,28 @@ struct SignInView: View {
                     .padding(18)
                     .cardStyle(cornerRadius: 16)
 
-                    Text("By continuing, you agree to our Terms of Use and Privacy Policy.")
-                        .font(.sgCaption2)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                    // The policy is readable before an account is created.
+                    Button {
+                        showingPrivacyPolicy = true
+                    } label: {
+                        Text("By continuing, you agree to our \(Text("Privacy Policy").underline().foregroundStyle(.red)).")
+                            .font(.sgCaption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Privacy Policy")
+                    .accessibilityHint("Shows how StreamStudy uses your data")
                 }
                 .padding(24)
                 // Keeps the form a readable width in landscape and on iPad.
                 .frame(maxWidth: 500)
                 .frame(maxWidth: .infinity)
             }
+        }
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            PrivacyPolicyView()
         }
     }
 

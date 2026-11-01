@@ -52,6 +52,7 @@ struct SubjectDetailView: View {
                     Label("Season Recap", systemImage: "play.rectangle.on.rectangle.fill")
                 }
                 .buttonStyle(PrimaryButtonStyle())
+                .accessibilityHint("Plays a summary of your progress in this subject")
 
                 Text("Series & Episodes")
                     .font(.spaceGrotesk(size: 20, weight: .bold, relativeTo: .title3))

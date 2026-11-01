@@ -84,9 +84,18 @@ struct SwipeToReviseCard<Content: View>: View {
         // ScrollView keeps working while the card is being swiped.
         .simultaneousGesture(dragGesture)
         .accessibilityElement(children: .combine)
+        .accessibilityValue(ratingDescription)
         .accessibilityHint("Swipe right if you understand this, left if it needs revision, or use the buttons below.")
         .accessibilityAction(named: "Got it") { rate(.understood) }
         .accessibilityAction(named: "Needs revision") { rate(.needsRevision) }
+    }
+
+    private var ratingDescription: String {
+        switch currentRating {
+        case .understood: return "Rated got it"
+        case .needsRevision: return "Rated needs revision"
+        case .notRated: return "Not rated yet"
+        }
     }
 
     private var borderColor: Color {

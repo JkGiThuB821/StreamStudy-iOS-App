@@ -239,11 +239,29 @@ struct CalendarView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(day.date.formatted(date: .complete, time: .omitted))
+        .accessibilityValue(dayAccessibilityValue(day, isToday: isToday))
+        .accessibilityHint("Shows the deadlines for this day")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .opacity(
             day.isInDisplayedMonth
                 ? 1
                 : 0.22
         )
+    }
+
+    // VoiceOver can't see the priority dots, so describe them in words.
+    private func dayAccessibilityValue(_ day: CalendarDay, isToday: Bool) -> String {
+        var parts: [String] = []
+        if isToday { parts.append("Today") }
+        if day.priorities.isEmpty {
+            parts.append("No deadlines")
+        } else {
+            let count = day.priorities.count
+            let names = day.priorities.map(\.displayName).joined(separator: ", ")
+            parts.append("\(count) deadline\(count == 1 ? "" : "s"), \(names) priority")
+        }
+        return parts.joined(separator: ", ")
     }
 
     // MARK: - Upcoming Deadlines
@@ -336,6 +354,7 @@ struct CalendarView: View {
         .fixedSize(horizontal: false, vertical: true)
         .cardStyle()
         .accessibilityElement(children: .combine)
+        .accessibilityHint("Touch and hold for more options")
         .contextMenu {
             Button(role: .destructive) {
                 modelContext.delete(deadline)

@@ -129,7 +129,9 @@ struct ResourceDetailView: View {
                         .cardStyle(cornerRadius: 10)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(resource.isSaved ? "Remove from saved" : "Save for later")
+                .accessibilityLabel("Save for later")
+                .accessibilityValue(resource.isSaved ? "Saved" : "Not saved")
+                .accessibilityHint(resource.isSaved ? "Removes this resource from your saved list" : "Adds this resource to your saved list")
             }
 
             Button(action: open) {

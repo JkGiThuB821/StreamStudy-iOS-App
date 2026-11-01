@@ -15,6 +15,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>StreamStudy</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>GEMINI_API_KEY</key>
 	<string>$(GEMINI_API_KEY)</string>
 	<key>UIAppFonts</key>

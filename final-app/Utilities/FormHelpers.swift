@@ -7,6 +7,10 @@
 
 import SwiftUI
 
+// MARK: - Info button (Week 11 feedback: move descriptions behind ⓘ icons)
+
+// A small ⓘ button that shows an explanation in a popover, so screens stay
+// uncluttered while the help is still one tap away.
 struct InfoButton: View {
     let title: String
     let message: String
@@ -19,9 +23,11 @@ struct InfoButton: View {
             Image(systemName: "info.circle")
                 .font(.body)
                 .foregroundStyle(.secondary)
+                .expandedTapArea(by: 12)   // 44pt+ hit target, same look
         }
         .buttonStyle(.plain)
         .accessibilityLabel("About \(title)")
+        .accessibilityHint("Shows an explanation")
         .popover(isPresented: $isShowing) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title).font(.sgHeadline)

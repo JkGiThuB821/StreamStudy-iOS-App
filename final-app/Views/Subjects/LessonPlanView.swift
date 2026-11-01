@@ -330,7 +330,9 @@ struct LessonPlanView: View {
                         .foregroundStyle(resource.isCompleted ? Color.green : Color.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(resource.isCompleted ? "Mark incomplete" : "Mark complete")
+                .accessibilityLabel("Complete")
+                .accessibilityValue(resource.isCompleted ? "Done" : "Not done")
+                .accessibilityHint("Updates this topic's progress")
             }
         }
     }

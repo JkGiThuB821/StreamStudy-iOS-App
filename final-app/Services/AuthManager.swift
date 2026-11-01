@@ -102,6 +102,40 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    // MARK: - Account deletion (App Store Guideline 5.1.1(v))
+
+    // Firebase only deletes an account after a recent sign-in, so the password
+    // is checked first. Returns an error message, or nil on success.
+    func reauthenticate(password: String) async -> String? {
+        guard let user = Auth.auth().currentUser, let email = user.email else {
+            return "You need to be signed in to delete your account."
+        }
+        do {
+            let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+            try await user.reauthenticate(with: credential)
+            return nil
+        } catch {
+            return friendlyMessage(for: error)
+        }
+    }
+
+    // Deletes the Firebase account itself and the details saved on this device.
+    // isSignedIn flips via the state listener, which returns to the sign-in screen.
+    func deleteCurrentUser() async -> String? {
+        guard let user = Auth.auth().currentUser else { return nil }
+        let uid = user.uid
+        do {
+            try await user.delete()
+            let defaults = UserDefaults.standard
+            defaults.removeObject(forKey: UserPreferences.displayNameKey(for: uid))
+            let onboarded = defaults.string(forKey: UserPreferences.onboardedUserIDsKey) ?? ""
+            defaults.set(UserPreferences.removing(uid, from: onboarded), forKey: UserPreferences.onboardedUserIDsKey)
+            return nil
+        } catch {
+            return friendlyMessage(for: error)
+        }
+    }
+
     private func friendlyMessage(for error: Error) -> String {
         let code = AuthErrorCode(rawValue: (error as NSError).code)
         switch code {

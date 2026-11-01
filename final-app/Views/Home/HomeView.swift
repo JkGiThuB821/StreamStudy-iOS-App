@@ -210,6 +210,7 @@ struct HomeView: View {
                         .foregroundStyle(Color.appBackground)
                 }
                 .disabled(resource == nil)
+                .accessibilityHint("Opens this resource")
 
                 NavigationLink(value: topic) {
                     Text("More Info")
@@ -219,6 +220,7 @@ struct HomeView: View {
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.4)))
                         .foregroundStyle(Color.primary)
                 }
+                .accessibilityHint("Shows this episode's details")
             }
             .font(.spaceGrotesk(size: 15, weight: .bold))
             .padding(.top, 4)

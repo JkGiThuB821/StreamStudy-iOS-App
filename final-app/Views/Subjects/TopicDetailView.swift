@@ -270,7 +270,9 @@ struct TopicDetailView: View {
                             .foregroundStyle(resource.isSaved ? Color.red : Color.secondary)
                             .expandedTapArea(by: 10)
                     }
-                    .accessibilityLabel(resource.isSaved ? "Remove from saved" : "Save for later")
+                    .accessibilityLabel("Save for later")
+                    .accessibilityValue(resource.isSaved ? "Saved" : "Not saved")
+                    .accessibilityHint(resource.isSaved ? "Removes this resource from your saved list" : "Adds this resource to your saved list")
 
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -281,7 +283,9 @@ struct TopicDetailView: View {
                             .foregroundStyle(resource.isCompleted ? Color.green : Color.secondary)
                             .expandedTapArea(by: 10)
                     }
-                    .accessibilityLabel(resource.isCompleted ? "Mark as not complete" : "Mark as complete")
+                    .accessibilityLabel("Complete")
+                    .accessibilityValue(resource.isCompleted ? "Done" : "Not done")
+                    .accessibilityHint("Updates this topic's progress")
                 }
                 .buttonStyle(.plain)
                 .font(.title3)

@@ -162,7 +162,8 @@ struct OnboardingView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(step.rawValue + 1) of \(Step.allCases.count)")
+        .accessibilityLabel("Setup progress")
+        .accessibilityValue("Step \(step.rawValue + 1) of \(Step.allCases.count)")
     }
 
     private func stepHeader(_ title: String, detail: String) -> some View {

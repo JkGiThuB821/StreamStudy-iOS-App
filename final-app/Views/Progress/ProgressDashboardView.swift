@@ -198,6 +198,7 @@ struct ProgressDashboardView: View {
                 .foregroundStyle(isSelected ? Color.white : Color.primary)
         }
         .buttonStyle(.plain)
+        .accessibilityHint("Filters the subject progress shown below")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 

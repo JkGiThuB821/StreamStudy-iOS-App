@@ -186,6 +186,35 @@ final class FirestoreSyncService: ObservableObject {
         await pull(uid: uid, modelContext: modelContext)
     }
 
+    // MARK: - Account deletion
+
+    // Removes everything this account stored in Firestore: every document in
+    // each collection, then the users/{uid} document itself.
+    func deleteAllData(uid: String) async throws {
+        let base = db.collection("users").document(uid)
+        for name in ["subjects", "topics", "resources", "deadlines", "studyProgress"] {
+            let documents = try await base.collection(name).getDocuments(source: .server).documents
+            // A Firestore batch holds at most 500 writes.
+            for start in stride(from: 0, to: documents.count, by: 450) {
+                let batch = db.batch()
+                for document in documents[start..<min(start + 450, documents.count)] {
+                    batch.deleteDocument(document.reference)
+                }
+                try await batch.commit()
+            }
+        }
+        try await base.delete()
+        lastSyncedAt = nil
+    }
+
+    // Removes this account's data from the device, including the weekly
+    // digests, which are only stored locally.
+    func clearLocalData(modelContext: ModelContext) throws {
+        try wipeLocalData(modelContext: modelContext)
+        try modelContext.delete(model: WeeklyDigest.self)
+        try modelContext.save()
+    }
+
     private func wipeLocalData(modelContext: ModelContext) throws {
         try modelContext.delete(model: StudyProgress.self)
         try modelContext.delete(model: Deadline.self)

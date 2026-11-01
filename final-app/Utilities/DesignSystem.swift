@@ -94,7 +94,8 @@ struct ProgressRing: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(Int(progress * 100)) percent complete")
+        .accessibilityLabel("Progress")
+        .accessibilityValue("\(Int(progress * 100)) percent complete")
     }
 }
 

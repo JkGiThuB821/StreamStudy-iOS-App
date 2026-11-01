@@ -25,6 +25,12 @@ struct AccountView: View {
     @State private var showingDemoConfirm = false
     @State private var demoMessage: String?
     @State private var nameDraft = ""
+    @State private var showingPrivacyPolicy = false
+    @State private var showingAbout = false
+    @State private var showingDeleteAccount = false
+    @State private var deletePassword = ""
+    @State private var isDeletingAccount = false
+    @State private var deleteAccountError: String?
     @AppStorage(UserPreferences.replayOnboardingKey) private var replayOnboarding = false
     @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 56
 
@@ -60,6 +66,16 @@ struct AccountView: View {
         .onAppear {
             nameDraft = authManager.displayName ?? ""
         }
+        .confirmationDialog(
+            "Load demo data?",
+            isPresented: $showingDemoConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Load Demo Data") { loadDemoData() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Adds sample subjects, topics, study history, ratings, deadlines and weekly drops to this account. Best used on a separate demo account.")
+        }
         .fullScreenCover(isPresented: $showingRevisionMode) {
             RevisionModeView()
         }
@@ -73,6 +89,38 @@ struct AccountView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(passwordResetMessage ?? "")
+        }
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            PrivacyPolicyView()
+        }
+        .sheet(isPresented: $showingAbout) {
+            AboutView()
+        }
+        // Guideline 5.1.1(v): accounts created in the app can be deleted in the app.
+        .alert("Delete Account?", isPresented: $showingDeleteAccount) {
+            SecureField("Password", text: $deletePassword)
+            Button("Delete", role: .destructive) { deleteAccount() }
+            Button("Cancel", role: .cancel) { deletePassword = "" }
+        } message: {
+            Text("This permanently deletes your account and all your subjects, topics, progress and deadlines from this device and the cloud. Enter your password to confirm.")
+        }
+        .alert(
+            "Couldn't Delete Account",
+            isPresented: Binding(
+                get: { deleteAccountError != nil },
+                set: { if !$0 { deleteAccountError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteAccountError ?? "")
+        }
+        .overlay {
+            if isDeletingAccount {
+                ProgressView("Deleting your account…")
+                    .padding(24)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            }
         }
     }
 
@@ -160,18 +208,16 @@ struct AccountView: View {
                 settingsRow("Show Onboarding Again", systemImage: "sparkles", color: .purple) {
                     replayOnboarding = true
                 }
+                Divider().padding(.leading, 52)
+                settingsRow("Privacy Policy", systemImage: "hand.raised.fill", color: .gray) {
+                    showingPrivacyPolicy = true
+                }
+                Divider().padding(.leading, 52)
+                settingsRow("About StreamStudy", systemImage: "info.circle.fill", color: .red) {
+                    showingAbout = true
+                }
             }
             .cardStyle()
-            .confirmationDialog(
-                "Load demo data?",
-                isPresented: $showingDemoConfirm,
-                titleVisibility: .visible
-            ) {
-                Button("Load Demo Data") { loadDemoData() }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Adds sample subjects, topics, study history, ratings, deadlines and weekly drops to this account. Best used on a separate demo account.")
-            }
 
             if let demoMessage {
                 Text(demoMessage)
@@ -189,8 +235,54 @@ struct AccountView: View {
             .font(.spaceGrotesk(size: 16, weight: .bold))
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
+
+            Button("Delete Account", role: .destructive) {
+                deletePassword = ""
+                showingDeleteAccount = true
+            }
+            .font(.spaceGrotesk(size: 14, weight: .semibold))
+            .frame(maxWidth: .infinity)
+            .disabled(!network.isConnected || isDeletingAccount)
+            .accessibilityHint("Permanently deletes your account and all of your data")
+
+            if !network.isConnected {
+                Text("Connect to the internet to delete your account.")
+                    .font(.sgCaption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .padding(.horizontal)
+    }
+
+    // Order matters: check the password, delete the cloud data while still
+    // signed in, clear this device, then delete the sign-in account last.
+    private func deleteAccount() {
+        guard let uid = authManager.uid else { return }
+        let password = deletePassword
+        deletePassword = ""
+        isDeletingAccount = true
+
+        Task {
+            defer { isDeletingAccount = false }
+
+            if let error = await authManager.reauthenticate(password: password) {
+                deleteAccountError = error
+                return
+            }
+            do {
+                try await syncService.deleteAllData(uid: uid)
+            } catch {
+                deleteAccountError = "Couldn't delete your synced data. Check your connection and try again."
+                return
+            }
+            try? syncService.clearLocalData(modelContext: modelContext)
+            UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+
+            if let error = await authManager.deleteCurrentUser() {
+                deleteAccountError = error
+            }
+        }
     }
 
     private var profileCard: some View {
@@ -239,7 +331,7 @@ struct AccountView: View {
     private func loadDemoData() {
         let added = DemoDataService.load(into: modelContext)
         demoMessage = added == 0
-            ? "Demo data is already loaded."
+            ? "Demo data is already loaded: \"iOS Development\" and \"Algorithms & Data Structures\" already have topics on this account."
             : "Added \(added) demo subject\(added == 1 ? "" : "s"). Check Home, the Weekly Digest and each subject's Season Recap."
 
         // Upload straight away, so the next launch's sync doesn't remove it.
@@ -250,7 +342,7 @@ struct AccountView: View {
     private var connectionRow: some View {
         Label(
             network.isConnected
-                ? (syncService.lastSyncedAt != nil ? "Online Â· synced with Firestore" : "Online")
+                ? (syncService.lastSyncedAt != nil ? "Online · synced with Firestore" : "Online")
                 : "Offline: changes sync when you reconnect",
             systemImage: "circle.fill"
         )
@@ -469,7 +561,7 @@ struct AccountView: View {
 
 }
 
-// A small coloured dot before the text ("â— Online").
+// A small coloured dot before the text ("● Online").
 private struct DotLabelStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 5) {
