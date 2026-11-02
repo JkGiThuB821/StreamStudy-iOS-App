@@ -15,6 +15,8 @@ import SwiftData
 //
 // Best loaded on a separate demo account. Subjects that already exist (by
 // name) are skipped, so loading twice doesn't duplicate anything.
+// Explicitly @MainActor: it reads and writes SwiftData models owned by the main
+// context. (Xcode 26 makes this the default; Xcode 16 needs it spelled out.)
 @MainActor
 enum DemoDataService {
 
@@ -117,13 +119,22 @@ enum DemoDataService {
     // Returns how many subjects were added (0 if they all existed already).
     @discardableResult
     static func load(into context: ModelContext, now: Date = .now, calendar: Calendar = .current) -> Int {
-        let existingNames = Set(((try? context.fetch(FetchDescriptor<Subject>())) ?? []).map { $0.name.lowercased() })
+        let existingSubjects = (try? context.fetch(FetchDescriptor<Subject>())) ?? []
         var addedTopics: [Topic] = []
         var addedCount = 0
 
-        for demo in subjects where !existingNames.contains(demo.name.lowercased()) {
-            let subject = Subject(name: demo.name, subjectDescription: demo.description, colorHex: demo.colorHex, iconName: demo.icon)
-            context.insert(subject)
+        for demo in subjects {
+            let subject: Subject
+            if let existing = existingSubjects.first(where: { $0.name.caseInsensitiveCompare(demo.name) == .orderedSame }) {
+                // Already has content: leave it alone (no duplicates).
+                guard existing.topics.isEmpty else { continue }
+                // Empty, e.g. added during onboarding: fill it with the demo content.
+                subject = existing
+                if subject.subjectDescription.isEmpty { subject.subjectDescription = demo.description }
+            } else {
+                subject = Subject(name: demo.name, subjectDescription: demo.description, colorHex: demo.colorHex, iconName: demo.icon)
+                context.insert(subject)
+            }
             addedCount += 1
 
             for (index, demoTopic) in demo.topics.enumerated() {

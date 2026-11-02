@@ -17,7 +17,7 @@ import SwiftData
 @MainActor
 func makeTestContainer() throws -> ModelContainer {
     try ModelContainer(
-        for: Subject.self, Topic.self, LearningResource.self, Deadline.self, StudyProgress.self,
+        for: Subject.self, Topic.self, LearningResource.self, Deadline.self, StudyProgress.self, WeeklyDigest.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 }
