@@ -269,31 +269,41 @@ struct HomeView: View {
                 HStack(spacing: 12) {
                     ForEach(upcomingDeadlines.prefix(5)) { deadline in
                         let subject = deadline.subject
-                        VStack(alignment: .leading, spacing: 8) {
-                            BadgeLabel(text: "Deadline", color: deadline.priority.color == .yellow ? .orange : deadline.priority.color)
-                            Spacer(minLength: 0)
-                            Image(systemName: subject?.iconName ?? "calendar")
-                                .font(.title2)
-                                .foregroundStyle(Color(hex: subject?.colorHex ?? "#E50914"))
-                            if let subject {
-                                ProgressView(value: subject.progress)
-                                    .tint(Color(hex: subject.colorHex))
-                                Text("\(Int(subject.progress * 100))% complete")
-                                    .font(.sgCaption2)
-                                    .foregroundStyle(.secondary)
+                        // Opens the Calendar on this deadline (same route as a reminder notification).
+                        Button {
+                            deepLinkRouter.destination = .calendar(deadline.id)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                BadgeLabel(text: "Deadline", color: deadline.priority.color == .yellow ? .orange : deadline.priority.color)
+                                Spacer(minLength: 0)
+                                Image(systemName: subject?.iconName ?? "calendar")
+                                    .font(.title2)
+                                    .foregroundStyle(Color(hex: subject?.colorHex ?? "#E50914"))
+                                if let subject {
+                                    ProgressView(value: subject.progress)
+                                        .tint(Color(hex: subject.colorHex))
+                                    Text("\(Int(subject.progress * 100))% complete")
+                                        .font(.sgCaption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(deadline.title)
+                                    .font(.spaceGrotesk(size: 14, weight: .bold))
+                                    .lineLimit(2)
+                                Text(daysLabel(deadline))
+                                    .font(.sgCaption)
+                                    .foregroundStyle(.red)
                             }
-                            Text(deadline.title)
-                                .font(.spaceGrotesk(size: 14, weight: .bold))
-                                .lineLimit(2)
-                            Text(daysLabel(deadline))
-                                .font(.sgCaption)
-                                .foregroundStyle(.red)
+                            .padding(12)
+                            .frame(width: cardWidth, alignment: .leading)
+                            .frame(minHeight: cardHeight, alignment: .topLeading)
+                            .background(Color(hex: subject?.colorHex ?? "#333333").opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
+                            .foregroundStyle(.primary)
+                            .contentShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .padding(12)
-                        .frame(width: cardWidth, alignment: .leading)
-                        .frame(minHeight: cardHeight, alignment: .topLeading)
-                        .background(Color(hex: subject?.colorHex ?? "#333333").opacity(0.18), in: RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.cardStroke))
+                        .buttonStyle(.plain)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityHint("Opens this deadline in the Calendar")
                     }
                 }
                 .padding(.horizontal)
@@ -307,19 +317,28 @@ struct HomeView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(quickWins.prefix(8)) { resource in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Image(systemName: resource.type.sfSymbol).foregroundStyle(.red)
-                            Text(resource.title)
-                                .font(.spaceGrotesk(size: 14, weight: .semibold))
-                                .lineLimit(2)
-                            Text("\(resource.durationMinutes) min")
-                                .font(.sgCaption)
-                                .foregroundStyle(.secondary)
+                        NavigationLink {
+                            ResourceDetailView(resource: resource)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Image(systemName: resource.type.sfSymbol).foregroundStyle(.red)
+                                Text(resource.title)
+                                    .font(.spaceGrotesk(size: 14, weight: .semibold))
+                                    .lineLimit(2)
+                                Text("\(resource.durationMinutes) min")
+                                    .font(.sgCaption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(12)
+                            .frame(width: quickWinWidth, alignment: .leading)
+                            .frame(minHeight: 100, alignment: .topLeading)
+                            .cardStyle(cornerRadius: 12)
+                            .foregroundStyle(.primary)
+                            .contentShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .padding(12)
-                        .frame(width: quickWinWidth, alignment: .leading)
-                        .frame(minHeight: 100, alignment: .topLeading)
-                        .cardStyle(cornerRadius: 12)
+                        .buttonStyle(.plain)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityHint("Shows this resource's details")
                     }
                 }
                 .padding(.horizontal)

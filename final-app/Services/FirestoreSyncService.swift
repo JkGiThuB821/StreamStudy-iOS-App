@@ -25,9 +25,38 @@ final class FirestoreSyncService: ObservableObject {
 
     private let db = Firestore.firestore()
 
+    // Which account the data on this device belongs to. Uploads only go to
+    // that account, so one user's data can never be copied into another's.
+    private static let localDataOwnerKey = "localDataOwnerUID"
+
+    private var localDataOwner: String? {
+        get { UserDefaults.standard.string(forKey: Self.localDataOwnerKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.localDataOwnerKey) }
+    }
+
+    // Called when an account signs in: if the device still holds another
+    // account's data (e.g. the app closed before sign-out finished), it is
+    // removed first. Then the device is marked as belonging to this account.
+    func prepareLocalData(for uid: String, modelContext: ModelContext) {
+        if let owner = localDataOwner, owner != uid {
+            do {
+                try clearLocalData(modelContext: modelContext)
+                print("Removed another account's data from this device")
+            } catch {
+                print("Couldn't clear another account's data: \(error)")
+            }
+        }
+        localDataOwner = uid
+    }
+
     // MARK: - Push (local -> Firestore), called on scenePhase .background
 
     func push(uid: String, modelContext: ModelContext) async {
+        // Never upload data that belongs to a different account.
+        guard localDataOwner == nil || localDataOwner == uid else {
+            print("Skipped upload: the data on this device belongs to another account")
+            return
+        }
         isSyncing = true
         syncError = nil
         defer { isSyncing = false }
@@ -216,6 +245,7 @@ final class FirestoreSyncService: ObservableObject {
         // The next account starts with a fresh sync status too.
         lastSyncedAt = nil
         syncError = nil
+        localDataOwner = nil
     }
 
     // Each object is fetched and deleted one by one. The batch delete,

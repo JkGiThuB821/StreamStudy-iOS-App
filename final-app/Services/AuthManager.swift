@@ -139,8 +139,14 @@ final class AuthManager: ObservableObject {
     private func friendlyMessage(for error: Error) -> String {
         let code = AuthErrorCode(rawValue: (error as NSError).code)
         switch code {
-        case .wrongPassword, .invalidCredential:
-            return "Incorrect email or password."
+        case .userNotFound:
+            return "No account exists with that email. Choose Create Account to sign up."
+        case .wrongPassword:
+            return "Incorrect password. Please try again."
+        case .invalidCredential:
+            // With Firebase's email enumeration protection on (the default), a
+            // missing account and a wrong password return this same error.
+            return "Incorrect email or password, or no account exists with that email. New here? Choose Create Account."
         case .emailAlreadyInUse:
             return "An account with that email already exists."
         case .weakPassword:

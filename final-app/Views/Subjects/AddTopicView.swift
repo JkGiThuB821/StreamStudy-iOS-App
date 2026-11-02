@@ -48,7 +48,7 @@ struct AddTopicView: View {
                 } header: {
                     InfoHeader(
                         title: "Search tag (optional)",
-                        info: "Used to find dev.to articles and curated docs for this topic. Leave blank to guess one from the title."
+                        info: "A keyword such as \"swiftui\" that helps find more relevant dev.to articles and documentation. If you leave it blank, StreamStudy picks keywords from the topic title."
                     )
                 }
             }
@@ -78,4 +78,3 @@ struct AddTopicView: View {
         dismiss()
     }
 }
-

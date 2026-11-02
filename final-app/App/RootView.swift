@@ -54,6 +54,7 @@ struct RootView: View {
             if !isSignedIn {
                 do {
                     try syncService.clearLocalData(modelContext: modelContext)
+                    print("Signed out: cleared this device's data")
                 } catch {
                     print("Couldn't clear local data on sign-out: \(error)")
                 }
@@ -61,9 +62,12 @@ struct RootView: View {
                 checkedOnboardingIDs = []
                 return
             }
+            guard let uid = authManager.uid else { return }
+            // Removes any other account's data still on the device before anything syncs.
+            syncService.prepareLocalData(for: uid, modelContext: modelContext)
             // Offline: skip the pull. It replaces local data with the cloud copy, and
             // with no connection that copy could be empty. Local data keeps working.
-            guard isSignedIn, let uid = authManager.uid, network.isConnected else { return }
+            guard network.isConnected else { return }
             Task { await syncService.pull(uid: uid, modelContext: modelContext) }
         }
         .onChange(of: network.isConnected) { _, isConnected in

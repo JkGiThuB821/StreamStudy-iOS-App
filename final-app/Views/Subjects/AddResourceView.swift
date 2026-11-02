@@ -29,10 +29,17 @@ struct AddResourceView: View {
         !title.isBlank && isValidURL
     }
 
+    // Links from known video sites. Anything else can't be checked, so the
+    // type the user picks is trusted.
+    private var isVideoLink: Bool {
+        guard let host = URL(string: urlString)?.host?.lowercased() else { return false }
+        return ["youtube.com", "youtu.be", "vimeo.com"].contains { host == $0 || host.hasSuffix("." + $0) }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section("New Resource") {
+                Section {
                     TextField("Title", text: $title)
                         .characterLimit($title, TextLimits.title)
                     TextField("URL (https://...)", text: $urlString)
@@ -45,7 +52,20 @@ struct AddResourceView: View {
                         ForEach(ResourceType.allCases, id: \.self) { Text($0.displayName).tag($0) }
                     }
                     Stepper("Duration: \(durationMinutes) min", value: $durationMinutes, in: 1...240)
+                } header: {
+                    Text("New Resource")
+                } footer: {
+                    if isVideoLink && type != .video {
+                        Label("This looks like a video link. Consider setting the type to Video.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    } else {
+                        Text("Only YouTube and Vimeo links are recognised automatically. For other links, please choose the type that matches.")
+                    }
                 }
+            }
+            // Picks Video automatically when a video link is pasted.
+            .onChange(of: urlString) {
+                if isVideoLink { type = .video }
             }
             .font(.sgBody)
             .navigationTitle("Add Resource")

@@ -24,24 +24,26 @@ struct RevisionModeView: View {
     @State private var revisionCount = 0
 
     // Topics most in need of revision first; unrated ones count as uncertain.
-    // If everything is already "got it", review the whole set instead.
-    private static func makeDeck(from topics: [Topic]) -> [Topic] {
+    // Topics already rated "got it" are left out, so a finished session doesn't
+    // start over. `includeAll` is the "review everything anyway" option.
+    private static func makeDeck(from topics: [Topic], includeAll: Bool = false) -> [Topic] {
         let open = topics.filter { !$0.isCompleted }
         let pool = open.isEmpty ? topics : open
         let sorted = pool.sorted { SignalPipeline.difficultySignal(for: $0) > SignalPipeline.difficultySignal(for: $1) }
-        let needsWork = sorted.filter { SignalPipeline.difficultySignal(for: $0) >= 0.5 }
-        return needsWork.isEmpty ? sorted : needsWork
+        return includeAll ? sorted : sorted.filter { SignalPipeline.difficultySignal(for: $0) >= 0.5 }
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                if deck.isEmpty {
+                if topics.isEmpty {
                     ContentUnavailableView(
                         "Nothing to revise yet",
                         systemImage: "rectangle.stack",
                         description: Text("Add topics to a subject to start a revision session.")
                     )
+                } else if deck.isEmpty {
+                    allCaughtUp
                 } else if index < deck.count {
                     progressHeader
                     topicCard(deck[index])
@@ -117,6 +119,19 @@ struct RevisionModeView: View {
         }
     }
 
+    // Every topic is rated "got it": say so instead of dealing them all again.
+    private var allCaughtUp: some View {
+        ContentUnavailableView {
+            Label("All caught up", systemImage: "checkmark.seal.fill")
+        } description: {
+            Text("You've rated every topic as understood. Rate a topic \"Needs Revision\" and it will come up here.")
+        } actions: {
+            Button("Review All Topics Anyway") { startSession(includeAll: true) }
+                .buttonStyle(.bordered)
+                .tint(.red)
+        }
+    }
+
     private var summary: some View {
         VStack(spacing: 14) {
             Image(systemName: "checkmark.seal.fill")
@@ -135,8 +150,21 @@ struct RevisionModeView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
                 .padding(.top, 8)
+            // Starts a new session with the topics that still need revision.
+            if revisionCount > 0 {
+                Button("Revise Again") { startSession() }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+            }
         }
         .frame(maxHeight: .infinity)
+    }
+
+    private func startSession(includeAll: Bool = false) {
+        deck = Self.makeDeck(from: topics, includeAll: includeAll)
+        index = 0
+        ratedCount = 0
+        revisionCount = 0
     }
 
     // After a swipe, wait for the card's fly-off before showing the next topic.

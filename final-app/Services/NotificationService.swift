@@ -25,6 +25,9 @@ final class NotificationService: ObservableObject {
         let title: String
         let body: String
         let fireDate: Date?
+        // The deadline's own due date, so the Upcoming Reminders list doesn't
+        // repeat the notification text ("tomorrow"), which is relative to when it fires.
+        let dueDate: Date?
     }
 
     @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
@@ -87,7 +90,8 @@ final class NotificationService: ObservableObject {
             content.body = body(for: deadline, firingAt: fireDate)
             content.sound = .default
             content.userInfo = [
-                "deepLink": deepLink(for: deadline)
+                "deepLink": deepLink(for: deadline),
+                "dueDate": deadline.dueDate.timeIntervalSince1970
             ]
 
             let components = Calendar.current.dateComponents(
@@ -183,7 +187,8 @@ final class NotificationService: ObservableObject {
                     id: request.identifier,
                     title: request.content.title,
                     body: request.content.body,
-                    fireDate: (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate()
+                    fireDate: (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate(),
+                    dueDate: (request.content.userInfo["dueDate"] as? TimeInterval).map(Date.init(timeIntervalSince1970:))
                 )
             }
             .sorted { ($0.fireDate ?? .distantFuture) < ($1.fireDate ?? .distantFuture) }

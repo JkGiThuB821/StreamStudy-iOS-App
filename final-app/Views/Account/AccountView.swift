@@ -542,15 +542,24 @@ struct AccountView: View {
     private func reminderRow(_ reminder: NotificationService.PendingReminder) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(reminder.title).font(.spaceGrotesk(size: 15, weight: .semibold))
-            if let fireDate = reminder.fireDate {
-                Text(fireDate.formatted(date: .abbreviated, time: .shortened))
+            if let dueDate = reminder.dueDate {
+                Text("Due \(dueDate.formatted(date: .abbreviated, time: .shortened))")
                     .font(.sgCaption)
                     .foregroundStyle(.red)
             }
-            Text(reminder.body)
-                .font(.sgCaption2)
-                .foregroundStyle(.secondary)
+            if let fireDate = reminder.fireDate {
+                Text("Reminder \(fireDate.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.sgCaption2)
+                    .foregroundStyle(.secondary)
+            }
+            // Reminders scheduled before the due date was stored show the notification text.
+            if reminder.dueDate == nil {
+                Text(reminder.body)
+                    .font(.sgCaption2)
+                    .foregroundStyle(.secondary)
+            }
         }
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .cardStyle(cornerRadius: 12)

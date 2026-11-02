@@ -85,7 +85,7 @@ struct AboutView: View {
                     creditSection("Web Services & APIs", services)
                     creditSection("Apple Frameworks", apple)
                     creditSection("Fonts", assets)
-                    creditSection("Learning Resources & Tools", learning)
+                    creditSection("Resources Used to Build StreamStudy", learning)
 
                     Text("YouTube and dev.to content belongs to its creators. StreamStudy links to it and never downloads or stores it.")
                         .font(.sgCaption2)
@@ -111,11 +111,16 @@ struct AboutView: View {
 
     private var header: some View {
         VStack(spacing: 8) {
-            Image(systemName: "play.rectangle.fill")
-                .font(.system(size: iconSize * 0.45))
+            // A simple "S" monogram in the app's own font (Space Grotesk, OFL).
+            // Not an SF Symbol: Apple's licence doesn't allow symbols in logos.
+            Text("S")
+                .font(.spaceGrotesk(size: iconSize * 0.6, weight: .bold))
                 .foregroundStyle(.white)
                 .frame(width: iconSize, height: iconSize)
-                .background(Color.red, in: RoundedRectangle(cornerRadius: iconSize * 0.22))
+                .background(
+                    LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: iconSize * 0.22)
+                )
                 .accessibilityHidden(true)
             Text("StreamStudy")
                 .font(.spaceGrotesk(size: 26, weight: .bold, relativeTo: .title))
