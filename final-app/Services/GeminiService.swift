@@ -45,9 +45,9 @@ enum GeminiService {
     }
 
     // Configured AND online. Callers fall back to on-device logic otherwise.
-//    static var isAvailable: Bool {
-//        isConfigured && NetworkMonitor.shared.isConnected
-//    }
+    // Explicitly @MainActor because NetworkMonitor is main-actor state, and
+    // written without `&&`: its right-hand side is an autoclosure, which the
+    // compiler treats as nonisolated.
     @MainActor static var isAvailable: Bool {
         guard isConfigured else { return false }
         return NetworkMonitor.shared.isConnected
@@ -75,7 +75,8 @@ enum GeminiService {
             ],
         ]
 
-        var request = URLRequest(url: url, timeoutInterval: 45)
+        // Lesson plans can take a while on the free tier, so allow up to 90 seconds.
+        var request = URLRequest(url: url, timeoutInterval: 90)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(key, forHTTPHeaderField: "x-goog-api-key")

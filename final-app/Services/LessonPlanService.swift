@@ -10,6 +10,8 @@ import Foundation
 // Turns a topic's videos, articles and docs into an ordered, step-by-step
 // lesson plan. Gemini designs the plan as JSON when a key is configured;
 // otherwise (or if the call fails) a rule-based plan is built on-device.
+// Explicitly @MainActor: it reads and writes SwiftData models owned by the main
+// context. (Xcode 26 makes this the default; Xcode 16 needs it spelled out.)
 @MainActor
 enum LessonPlanService {
 
@@ -20,13 +22,17 @@ enum LessonPlanService {
             return (localPlan(for: topic, resources: resources), nil)
         }
 
+        // A shorter prompt gets a faster answer: send at most 12 resources
+        // (docs first, then the shortest) to Gemini.
+        let aiResources = Array(resources.prefix(12))
+
         do {
             let ai = try await GeminiService.generateJSON(
                 AILessonPlan.self,
-                prompt: prompt(for: topic, resources: resources),
+                prompt: prompt(for: topic, resources: aiResources),
                 schema: schema
             )
-            let plan = convert(ai, resources: resources)
+            let plan = convert(ai, resources: aiResources)
             guard !plan.steps.isEmpty else { throw GeminiServiceError.emptyResponse }
             return (plan, nil)
         } catch {
@@ -60,7 +66,7 @@ enum LessonPlanService {
         let list = resources.enumerated().map { index, resource -> String in
             let description = resource.resourceDescription
                 .replacingOccurrences(of: "\n", with: " ")
-                .prefix(250)
+                .prefix(150)
             return "[\(index)] \(resource.type.displayName.uppercased()) · \(resource.durationMinutes) min · \(resource.sourceName) · \"\(resource.title)\" — \(description)"
         }
         .joined(separator: "\n")

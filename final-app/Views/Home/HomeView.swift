@@ -274,7 +274,7 @@ struct HomeView: View {
                             deepLinkRouter.destination = .calendar(deadline.id)
                         } label: {
                             VStack(alignment: .leading, spacing: 8) {
-                                BadgeLabel(text: "Deadline", color: deadline.priority.color == .yellow ? .orange : deadline.priority.color)
+                                BadgeLabel(text: "Deadline", color: deadline.priority.color)
                                 Spacer(minLength: 0)
                                 Image(systemName: subject?.iconName ?? "calendar")
                                     .font(.title2)

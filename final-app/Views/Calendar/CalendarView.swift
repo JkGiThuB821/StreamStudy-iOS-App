@@ -451,14 +451,7 @@ struct CalendarView: View {
     private func priorityColor(
         _ priority: DeadlinePriority
     ) -> Color {
-        switch priority {
-        case .low:
-            return .green
-        case .medium:
-            return .yellow
-        case .high:
-            return .red
-        }
+        priority.color
     }
 
     private func priorityLabel(

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // Shared building blocks that match the UI design proposal's mock-ups
 // (bordered stat boxes, progress rings, red badges, red action buttons,
@@ -210,12 +211,20 @@ extension ScreenHeader where Trailing == EmptyView {
 // MARK: - Deadline helpers
 
 extension DeadlinePriority {
+    // Green, blue and red are easy to tell apart (yellow looked too close to red
+    // as a small dot, and too bright in Dark Mode). Each has a darker shade for
+    // Light Mode and a lighter one for Dark Mode, so text on the cards reaches
+    // at least 4.5:1 contrast in both.
     var color: Color {
         switch self {
-        case .low: return .green
-        case .medium: return .yellow
-        case .high: return .red
+        case .low: return Self.adaptive(light: UIColor(red: 0.12, green: 0.48, blue: 0.20, alpha: 1), dark: .systemGreen)
+        case .medium: return Self.adaptive(light: UIColor(red: 0.04, green: 0.36, blue: 0.71, alpha: 1), dark: UIColor(red: 0.39, green: 0.64, blue: 1.0, alpha: 1))
+        case .high: return Self.adaptive(light: UIColor(red: 0.77, green: 0.08, blue: 0.11, alpha: 1), dark: .systemRed)
         }
+    }
+
+    private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+        Color(UIColor { $0.userInterfaceStyle == .dark ? dark : light })
     }
 }
 
