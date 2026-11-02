@@ -1,93 +1,92 @@
-# final-app
+# StreamStudy
 
+StreamStudy turns university subjects into a streaming-style study planner. Each subject is a **series** and each topic an **episode**. The app finds videos, articles and documentation for every topic, builds AI lesson plans, tracks progress, and sends deadline reminders.
 
+FIT3178 iOS App Development, Monash University. Built by Joy Jasmine Kaur (33494266).
 
-## Getting started
+## Features
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Subjects and topics:** create subjects with an icon and colour, then add topics with optional search tags.
+- **Resource discovery:** finds study videos (YouTube Data API) and articles (dev.to) for each topic. Gemini tags each resource and ranks it by relevance.
+- **AI lesson plans:** Gemini builds a step-by-step plan for a topic. If Gemini is unavailable or the device is offline, an on-device plan is used instead.
+- **Progress dashboard:** Swift Charts views of study time, completed topics and how well you understood each topic.
+- **Calendar and deadlines:** deadlines with priorities, plus local reminder notifications.
+- **Season Pass:** Swipe-to-Revise cards, a Weekly Digest notification that opens the digest when tapped, and an animated Season Recap.
+- **Accounts and sync:** Firebase email sign-in, with SwiftData on the device synced to Cloud Firestore.
+- **Offline support:** a connection banner, cached data, and changes are uploaded when the connection returns.
+- **Accessibility:** VoiceOver labels, values and hints, Dynamic Type through `@ScaledMetric` and adaptive layouts, Reduce Motion support, touch targets of at least 44 pt, and Light/Dark Mode.
+- **Privacy:** an in-app privacy policy, a privacy manifest (`PrivacyInfo.xcprivacy`), and in-app account deletion (App Store Guideline 5.1.1(v)).
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Account data and switching accounts
 
-## Add your files
+- **Signing in:** the account's data is downloaded from Firestore and replaces whatever is on the device.
+- **Signing out:**
+  - the app first uploads your latest changes;
+  - it then removes that account's data and pending reminders from the device, so the next account starts empty;
+  - if you're offline, or the upload fails, it warns you before signing out.
+- **Weekly Digests** are only stored on the device, so signing out removes them.
+- **Deleting your account** (Account → Delete Account) asks for your password. It then removes all of your Firestore data, the data on this device, your reminders, and the Firebase account itself.
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Requirements
+
+- Xcode 16.4 or later. The project was made with Xcode 26, and it also runs on Xcode 16.4.
+- iOS 17.6 or later. On Xcode 16.4, set **iOS Deployment Target** to 17.6 for both the app and test targets.
+- A Firebase project with Email/Password Authentication and Cloud Firestore enabled.
+- A YouTube Data API v3 key. A Gemini API key is optional: without one, the app uses on-device lesson plans and tagging.
+
+## Setup
+
+1. Clone the repository and open `final-app.xcodeproj`.
+2. **Firebase:** download `GoogleService-Info.plist` from your Firebase project and drag it into the `final-app` folder in Xcode, with the **final-app** target ticked. This file is not committed.
+3. **API keys:** create `final-app/Config/Secrets.xcconfig`, which is also not committed:
+   ```
+   YOUTUBE_API_KEY = your_youtube_key
+   GEMINI_API_KEY = your_gemini_key
+   ```
+4. The Firebase packages are fetched through Swift Package Manager when the project opens. If they aren't, choose **File → Packages → Resolve Package Versions**.
+5. Pick an iPhone simulator, then choose **Product → Run**.
+
+## Demo tools
+
+The Account screen includes developer tools for the demo:
+- **Load Demo Data:** adds sample subjects, history, ratings, deadlines and weekly drops.
+- **Show Onboarding Again**
+- **Test Reminder** and **Test Weekly Drop**, in the Notifications tab
+
+These would be removed or hidden before an App Store release.
+
+## Tests
+
+Choose **Product → Test**. The unit tests in `final-appTests` cover:
+- deep links
+- lesson plans
+- network services, using a stubbed `URLSession`
+- the recommendation engine
+- the search planner
+- the Season Pass features
+- feedback-driven changes
+
+## Project structure
 
 ```
-cd existing_repo
-git remote add origin https://git.infotech.monash.edu/fit3178-joyj001/final-app.git
-git branch -M main
-git push -uf origin main
+final-app/
+  App/          App entry point and RootView (sign-in, onboarding and sync)
+  Config/       APIKeys and Secrets.xcconfig
+  Models/       SwiftData models
+  Services/     Auth, Firestore sync, YouTube, dev.to, Gemini, notifications, recommendations
+  Utilities/    Design system and form helpers
+  Views/        Home, Subjects, Calendar, Progress, Season Pass, Account, Auth, Onboarding
+final-appTests/ Unit tests
 ```
 
-## Integrate with your tools
+## Acknowledgements
 
-* [Set up project integrations](https://git.infotech.monash.edu/fit3178-joyj001/final-app/-/settings/integrations)
+- [Firebase iOS SDK](https://github.com/firebase/firebase-ios-sdk) (Apache 2.0)
+- [YouTube Data API v3](https://developers.google.com/youtube/v3)
+- [DEV Community (Forem) API](https://developers.forem.com/api)
+- [Google Gemini API](https://ai.google.dev/gemini-api/docs)
+- [Space Grotesk](https://fonts.google.com/specimen/Space+Grotesk) by Florian Karsten (SIL Open Font License 1.1)
+- SF Symbols, Apple Developer Documentation, Hacking with Swift, and the FIT3178 unit materials
+- Claude (Anthropic) helped with parts of the code and documentation. I reviewed all of it and understand it.
 
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+The full credits are also in the app, under Account → About StreamStudy.
