@@ -31,6 +31,8 @@ struct AccountView: View {
     @State private var deletePassword = ""
     @State private var isDeletingAccount = false
     @State private var deleteAccountError: String?
+    @State private var isSigningOut = false
+    @State private var showingUnsyncedSignOut = false
     @AppStorage(UserPreferences.replayOnboardingKey) private var replayOnboarding = false
     @ScaledMetric(relativeTo: .headline) private var avatarSize: CGFloat = 56
 
@@ -115,7 +117,18 @@ struct AccountView: View {
         } message: {
             Text(deleteAccountError ?? "")
         }
+        .alert("Sign Out Anyway?", isPresented: $showingUnsyncedSignOut) {
+            Button("Sign Out", role: .destructive) { authManager.signOut() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your latest changes haven't been uploaded yet. Signing out removes this account's data from this device, so those changes will be lost.")
+        }
         .overlay {
+            if isSigningOut {
+                ProgressView("Signing out…")
+                    .padding(24)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+            }
             if isDeletingAccount {
                 ProgressView("Deleting your account…")
                     .padding(24)
@@ -230,11 +243,12 @@ struct AccountView: View {
                 .cardStyle()
 
             Button("Sign Out", role: .destructive) {
-                authManager.signOut()
+                signOut()
             }
             .font(.spaceGrotesk(size: 16, weight: .bold))
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
+            .disabled(isSigningOut || isDeletingAccount)
 
             Button("Delete Account", role: .destructive) {
                 deletePassword = ""
@@ -253,6 +267,25 @@ struct AccountView: View {
             }
         }
         .padding(.horizontal)
+    }
+
+    // Uploads this account's latest changes before signing out, because signing
+    // out clears the device (see RootView). Offline or a failed upload: warn first.
+    private func signOut() {
+        guard network.isConnected, let uid = authManager.uid else {
+            showingUnsyncedSignOut = true
+            return
+        }
+        isSigningOut = true
+        Task {
+            defer { isSigningOut = false }
+            await syncService.push(uid: uid, modelContext: modelContext)
+            if syncService.syncError != nil {
+                showingUnsyncedSignOut = true
+            } else {
+                authManager.signOut()
+            }
+        }
     }
 
     // Order matters: check the password, delete the cloud data while still

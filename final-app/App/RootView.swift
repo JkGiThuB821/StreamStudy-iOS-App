@@ -7,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import UIKit
+import UserNotifications
 
 struct RootView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -48,6 +49,18 @@ struct RootView: View {
         .preferredColorScheme(appearance.colorScheme)
         .animation(.default, value: authManager.isSignedIn)
         .onChange(of: authManager.isSignedIn) { _, isSignedIn in
+            // Signed out: remove this account's data and reminders from the device,
+            // so the next account to sign in starts empty.
+            if !isSignedIn {
+                do {
+                    try syncService.clearLocalData(modelContext: modelContext)
+                } catch {
+                    print("Couldn't clear local data on sign-out: \(error)")
+                }
+                UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+                checkedOnboardingIDs = []
+                return
+            }
             // Offline: skip the pull. It replaces local data with the cloud copy, and
             // with no connection that copy could be empty. Local data keeps working.
             guard isSignedIn, let uid = authManager.uid, network.isConnected else { return }
@@ -62,6 +75,8 @@ struct RootView: View {
             if newPhase == .active {
                 // Picks up notification permission changes made in the Settings app.
                 Task { await NotificationService.shared.refreshStatus() }
+                // Re-checks the connection in case it changed while the app was closed.
+                network.recheck()
             }
             // Offline writes would wait forever; they're pushed when the connection returns.
             guard newPhase == .background, network.isConnected,

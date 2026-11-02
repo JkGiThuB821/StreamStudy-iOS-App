@@ -211,15 +211,27 @@ final class FirestoreSyncService: ObservableObject {
     // digests, which are only stored locally.
     func clearLocalData(modelContext: ModelContext) throws {
         try wipeLocalData(modelContext: modelContext)
-        try modelContext.delete(model: WeeklyDigest.self)
+        try deleteAll(WeeklyDigest.self, in: modelContext)
         try modelContext.save()
+        // The next account starts with a fresh sync status too.
+        lastSyncedAt = nil
+        syncError = nil
     }
 
+    // Each object is fetched and deleted one by one. The batch delete,
+    // `modelContext.delete(model:)`, works on the store directly, so objects
+    // the app already has loaded stayed on screen after signing out.
     private func wipeLocalData(modelContext: ModelContext) throws {
-        try modelContext.delete(model: StudyProgress.self)
-        try modelContext.delete(model: Deadline.self)
-        try modelContext.delete(model: LearningResource.self)
-        try modelContext.delete(model: Topic.self)
-        try modelContext.delete(model: Subject.self)
+        try deleteAll(StudyProgress.self, in: modelContext)
+        try deleteAll(Deadline.self, in: modelContext)
+        try deleteAll(LearningResource.self, in: modelContext)
+        try deleteAll(Topic.self, in: modelContext)
+        try deleteAll(Subject.self, in: modelContext)
+    }
+
+    private func deleteAll<T: PersistentModel>(_ type: T.Type, in modelContext: ModelContext) throws {
+        for object in try modelContext.fetch(FetchDescriptor<T>()) {
+            modelContext.delete(object)
+        }
     }
 }
