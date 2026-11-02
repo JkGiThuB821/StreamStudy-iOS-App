@@ -24,6 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E74A123A30985F16006E8974 /* final-app.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "final-app.xctestplan"; sourceTree = "<group>"; };
 		E74DC123305BC2CE00DF9FDE /* final-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "final-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E7D39571306BA5FF000136F2 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
@@ -80,6 +81,7 @@
 		E74DC11A305BC2CE00DF9FDE = {
 			isa = PBXGroup;
 			children = (
+				E74A123A30985F16006E8974 /* final-app.xctestplan */,
 				E74DC124305BC2CE00DF9FDE /* Products */,
 				E76F30A730696C8B00AD3F58 /* GoogleService-Info.plist */,
 				E76F30AA3069705E00AD3F58 /* Frameworks */,
@@ -442,6 +444,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "edu.monash.final-appTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -462,6 +465,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "edu.monash.final-appTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
