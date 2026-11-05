@@ -357,6 +357,7 @@ struct CalendarView: View {
         .accessibilityHint("Touch and hold for more options")
         .contextMenu {
             Button(role: .destructive) {
+                FirestoreSyncService.markForRemoteDeletion("deadlines", id: deadline.id)
                 modelContext.delete(deadline)
             } label: {
                 Label("Delete Deadline", systemImage: "trash")

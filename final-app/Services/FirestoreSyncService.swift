@@ -49,6 +49,35 @@ final class FirestoreSyncService: ObservableObject {
         localDataOwner = uid
     }
 
+    // MARK: - Deletions
+
+    // Paths of documents deleted on this device, e.g. "deadlines/<id>". Push only
+    // writes documents, so without this a pull would bring deleted items back.
+    private nonisolated static let pendingDeletionsKey = "pendingFirestoreDeletions"
+
+    nonisolated static func markForRemoteDeletion(_ collection: String, id: UUID) {
+        let defaults = UserDefaults.standard
+        let pending = defaults.stringArray(forKey: pendingDeletionsKey) ?? []
+        defaults.set(pending + ["\(collection)/\(id.uuidString)"], forKey: pendingDeletionsKey)
+    }
+
+    // Runs before every push and pull, so a pull can't restore a deleted item.
+    private func sendPendingDeletions(uid: String) async throws {
+        let defaults = UserDefaults.standard
+        let pending = defaults.stringArray(forKey: Self.pendingDeletionsKey) ?? []
+        guard !pending.isEmpty else { return }
+
+        let batch = db.batch()
+        for path in pending {
+            batch.deleteDocument(db.document("users/\(uid)/\(path)"))
+        }
+        try await batch.commit()
+
+        // Keeps anything deleted while the commit was running.
+        let remaining = (defaults.stringArray(forKey: Self.pendingDeletionsKey) ?? []).filter { !pending.contains($0) }
+        defaults.set(remaining, forKey: Self.pendingDeletionsKey)
+    }
+
     // MARK: - Push (local -> Firestore), called on scenePhase .background
 
     func push(uid: String, modelContext: ModelContext) async {
@@ -62,6 +91,8 @@ final class FirestoreSyncService: ObservableObject {
         defer { isSyncing = false }
 
         do {
+            try await sendPendingDeletions(uid: uid)
+
             let subjects = try modelContext.fetch(FetchDescriptor<Subject>())
             let topics = try modelContext.fetch(FetchDescriptor<Topic>())
             let resources = try modelContext.fetch(FetchDescriptor<LearningResource>())
@@ -125,6 +156,8 @@ final class FirestoreSyncService: ObservableObject {
         defer { isSyncing = false }
 
         do {
+            try await sendPendingDeletions(uid: uid)
+
             let base = db.collection("users").document(uid)
 
             // `.server` fails when offline instead of quietly returning Firestore's
@@ -246,6 +279,7 @@ final class FirestoreSyncService: ObservableObject {
         lastSyncedAt = nil
         syncError = nil
         localDataOwner = nil
+        UserDefaults.standard.removeObject(forKey: Self.pendingDeletionsKey)
     }
 
     // Each object is fetched and deleted one by one. The batch delete,

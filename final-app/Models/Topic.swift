@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-enum DifficultyRating: String, Codable, CaseIterable {
+nonisolated enum DifficultyRating: String, Codable, CaseIterable {
     case understood
     case needsRevision
     case notRated
@@ -75,6 +75,7 @@ final class Topic {
         } else if let entry = progressEntries
             .filter({ Calendar.current.isDateInToday($0.date) && $0.minutesSpent == resource.durationMinutes })
             .max(by: { $0.date < $1.date }) {
+            FirestoreSyncService.markForRemoteDeletion("studyProgress", id: entry.id)
             modelContext.delete(entry)
         }
 
