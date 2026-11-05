@@ -243,7 +243,7 @@ private struct RecapCardContent: View {
             Text(recap.subjectName)
                 .font(.spaceGrotesk(size: 34, weight: .bold, relativeTo: .largeTitle))
                 .reveal(stage >= 2)
-            Text(recap.seasonStart.map { "Season 1 Â· since \($0.formatted(.dateTime.day().month(.wide)))" } ?? "Your season is just beginning")
+            Text(recap.seasonStart.map { "Season 1 - since \($0.formatted(.dateTime.day().month(.wide)))" } ?? "Your season is just beginning")
                 .font(.sgSubheadline)
                 .opacity(0.8)
                 .reveal(stage >= 3)
