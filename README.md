@@ -94,25 +94,31 @@ The full credits are also in the app, under Account → About StreamStudy.
 The source code has been made public with permission from the university faculty after the unit was completed.
 
 ## Screenshots from the App
-<img width="920" height="1999" alt="image1" src="https://github.com/user-attachments/assets/bdc81698-f456-4f63-a899-89a868ac8411" />
-<img width="920" height="1999" alt="image2" src="https://github.com/user-attachments/assets/0706c71c-7b1b-41ae-a83b-f1b8c928a876" />
-<img width="920" height="1999" alt="image3" src="https://github.com/user-attachments/assets/9cf6e44b-2d2b-4263-86db-06ed35b1cc87" />
 
-<img width="920" height="1999" alt="image4" src="https://github.com/user-attachments/assets/fa7b877a-11a1-4ddc-a765-fa376db958c4" />
-<img width="920" height="1999" alt="image5" src="https://github.com/user-attachments/assets/8af65d2f-41f6-40ef-8530-5f69b3e5150a" />
-<img width="920" height="1999" alt="image6" src="https://github.com/user-attachments/assets/ad72f202-d08c-4576-a9e7-d7953969c682" />
-<img width="920" height="1999" alt="image7" src="https://github.com/user-attachments/assets/e3724a40-ad8b-41d1-8525-98558c93eda6" />
-<img width="920" height="1999" alt="image8" src="https://github.com/user-attachments/assets/c007732a-31da-4336-a25a-cb1f98957248" />
-<img width="920" height="1999" alt="image9" src="https://github.com/user-attachments/assets/d89ec1ae-ae63-4c84-b540-0ea6304fab48" />
-<img width="920" height="1999" alt="image10" src="https://github.com/user-attachments/assets/9490d3c1-2b12-4cab-9945-fcbbca3e85c0" />
-<img width="920" height="1999" alt="image11" src="https://github.com/user-attachments/assets/a37d13e6-f394-47de-8157-3af0573b4fb0" />
-<img width="361" height="773" alt="image12" src="https://github.com/user-attachments/assets/b140ec81-28c1-44ce-8d07-5e6713e48357" />
-<img width="920" height="1999" alt="image13" src="https://github.com/user-attachments/assets/45f72f71-1bed-43e5-8935-12014374609f" />
-<img width="920" height="1999" alt="image14" src="https://github.com/user-attachments/assets/94306415-cf4a-496e-a09d-5f8a96b67408" />
-<img width="920" height="1999" alt="image15" src="https://github.com/user-attachments/assets/d11fff0a-975a-4088-a1e0-c7f420c33865" />
-
-
-
-
-
-
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/bdc81698-f456-4f63-a899-89a868ac8411" width="220" alt="Screenshot 1"></td>
+    <td><img src="https://github.com/user-attachments/assets/0706c71c-7b1b-41ae-a83b-f1b8c928a876" width="220" alt="Screenshot 2"></td>
+    <td><img src="https://github.com/user-attachments/assets/9cf6e44b-2d2b-4263-86db-06ed35b1cc87" width="220" alt="Screenshot 3"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/fa7b877a-11a1-4ddc-a765-fa376db958c4" width="220" alt="Screenshot 4"></td>
+    <td><img src="https://github.com/user-attachments/assets/8af65d2f-41f6-40ef-8530-5f69b3e5150a" width="220" alt="Screenshot 5"></td>
+    <td><img src="https://github.com/user-attachments/assets/ad72f202-d08c-4576-a9e7-d7953969c682" width="220" alt="Screenshot 6"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/e3724a40-ad8b-41d1-8525-98558c93eda6" width="220" alt="Screenshot 7"></td>
+    <td><img src="https://github.com/user-attachments/assets/c007732a-31da-4336-a25a-cb1f98957248" width="220" alt="Screenshot 8"></td>
+    <td><img src="https://github.com/user-attachments/assets/d89ec1ae-ae63-4c84-b540-0ea6304fab48" width="220" alt="Screenshot 9"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/9490d3c1-2b12-4cab-9945-fcbbca3e85c0" width="220" alt="Screenshot 10"></td>
+    <td><img src="https://github.com/user-attachments/assets/a37d13e6-f394-47de-8157-3af0573b4fb0" width="220" alt="Screenshot 11"></td>
+    <td><img src="https://github.com/user-attachments/assets/b140ec81-28c1-44b-07f4-5e6713e48357" width="220" alt="Screenshot 12"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/45f72f71-1bed-43e5-8935-12014374609f" width="220" alt="Screenshot 13"></td>
+    <td><img src="https://github.com/user-attachments/assets/94306415-cf4a-496e-a09d-5f8a96b67408" width="220" alt="Screenshot 14"></td>
+    <td><img src="https://github.com/user-attachments/assets/d89ec1ae-ae63-4c84-b540-0ea6304fab48" width="220" alt="Screenshot 15"></td>
+  </tr>
+</table>
