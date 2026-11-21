@@ -114,7 +114,7 @@ The source code has been made public with permission from the university faculty
   <tr>
     <td><img src="https://github.com/user-attachments/assets/9490d3c1-2b12-4cab-9945-fcbbca3e85c0" width="220" alt="Screenshot 10"></td>
     <td><img src="https://github.com/user-attachments/assets/a37d13e6-f394-47de-8157-3af0573b4fb0" width="220" alt="Screenshot 11"></td>
-    <td><img src="https://github.com/user-attachments/assets/b140ec81-28c1-44b0-07f4-5e6713e48357" width="220" alt="Screenshot 12"></td>
+    <td><img src="https://github.com/user-attachments/assets/b140ec81-28c1-44ce-8d07-5e6713e48357" width="220" alt="Screenshot 12"></td>
   </tr>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/45f72f71-1bed-43e5-8935-12014374609f" width="220" alt="Screenshot 13"></td>
