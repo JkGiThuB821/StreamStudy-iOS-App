@@ -114,11 +114,11 @@ The source code has been made public with permission from the university faculty
   <tr>
     <td><img src="https://github.com/user-attachments/assets/9490d3c1-2b12-4cab-9945-fcbbca3e85c0" width="220" alt="Screenshot 10"></td>
     <td><img src="https://github.com/user-attachments/assets/a37d13e6-f394-47de-8157-3af0573b4fb0" width="220" alt="Screenshot 11"></td>
-    <td><img src="https://github.com/user-attachments/assets/b140ec81-28c1-44b-07f4-5e6713e48357" width="220" alt="Screenshot 12"></td>
+    <td><img src="https://github.com/user-attachments/assets/b140ec81-28c1-44b0-07f4-5e6713e48357" width="220" alt="Screenshot 12"></td>
   </tr>
   <tr>
     <td><img src="https://github.com/user-attachments/assets/45f72f71-1bed-43e5-8935-12014374609f" width="220" alt="Screenshot 13"></td>
     <td><img src="https://github.com/user-attachments/assets/94306415-cf4a-496e-a09d-5f8a96b67408" width="220" alt="Screenshot 14"></td>
-    <td><img src="https://github.com/user-attachments/assets/d89ec1ae-ae63-4c84-b540-0ea6304fab48" width="220" alt="Screenshot 15"></td>
+    <td><img src="https://github.com/user-attachments/assets/d11fff0a-975a-4088-a1e0-c7f420c33865" width="220" alt="Screenshot 15"></td>
   </tr>
 </table>
